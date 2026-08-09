@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from shared.config import get_settings
@@ -18,9 +18,7 @@ def _audit_path() -> Any:
     return Path(get_settings().mcp_root) / "logs" / "audit.log"
 
 
-async def validate_input(
-    value: str, schema_type: str, max_length: int = 1000
-) -> dict[str, Any]:
+async def validate_input(value: str, schema_type: str, max_length: int = 1000) -> dict[str, Any]:
     """Validate an input string against a known schema."""
     return _validate_input(value, schema_type, max_length)
 
@@ -39,9 +37,9 @@ async def audit_log(
     """Append a structured audit entry to the audit log."""
     entry = {
         "id": hashlib.sha256(
-            f"{action}:{resource}:{datetime.now(timezone.utc).isoformat()}".encode()
+            f"{action}:{resource}:{datetime.now(UTC).isoformat()}".encode()
         ).hexdigest()[:8],
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "action": action,
         "resource": resource,
         "result": result,

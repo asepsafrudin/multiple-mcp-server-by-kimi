@@ -7,8 +7,6 @@ from typing import Any
 
 import httpx
 
-from shared.config import get_settings
-
 
 def _strip_html_tags(text: str) -> str:
     text = re.sub(r"<script[^>]*>.*?</script>", "", text, flags=re.DOTALL | re.IGNORECASE)

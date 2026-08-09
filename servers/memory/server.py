@@ -9,12 +9,13 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from datetime import UTC
+
 from fastmcp import FastMCP
 
-from shared.config import get_settings
+from servers.memory import engine
 from shared.logging import configure_logging
 from shared.models import MemoryEntry
-from servers.memory import engine
 
 configure_logging()
 
@@ -48,11 +49,11 @@ async def memory_store(
     importance: 1-10
     expires_in_days: optional TTL after which the memory is auto-deleted.
     """
-    from datetime import datetime, timedelta, timezone
+    from datetime import datetime, timedelta
 
     expires_at = None
     if expires_in_days is not None:
-        expires_at = (datetime.now(timezone.utc) + timedelta(days=expires_in_days)).isoformat()
+        expires_at = (datetime.now(UTC) + timedelta(days=expires_in_days)).isoformat()
 
     entry = MemoryEntry(
         namespace=namespace,
@@ -82,8 +83,7 @@ async def memory_recall(
     min_importance: int = 1,
 ) -> list[dict]:
     """Recall relevant memories using hybrid semantic + keyword search."""
-    if limit > 20:
-        limit = 20
+    limit = min(limit, 20)
     results = await engine.recall(
         query=query,
         namespace=namespace,
@@ -107,8 +107,7 @@ async def memory_search(
     limit: int = 10,
 ) -> list[dict]:
     """Search memories using structured filters (tags, category, project, recency)."""
-    if limit > 50:
-        limit = 50
+    limit = min(limit, 50)
     results = await engine.search_by_filters(
         namespace=namespace,
         tags=tags,
@@ -169,4 +168,5 @@ async def memory_stats(namespace: str | None = None) -> dict:
 
 if __name__ == "__main__":
     from shared.server_runner import run
+
     run(mcp)

@@ -2,18 +2,21 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 import redis.asyncio as redis
 
 from shared.config import get_settings
 
+logger = logging.getLogger("mcp.shared.redis")
+
 _redis: redis.Redis | None = None
 
 
 async def get_redis() -> redis.Redis:
     """Return the global async Redis client."""
-    global _redis  # noqa: PLW0603
+    global _redis
     if _redis is None:
         settings = get_settings()
         _redis = redis.from_url(settings.redis_url, decode_responses=True)
@@ -22,7 +25,7 @@ async def get_redis() -> redis.Redis:
 
 async def close_redis() -> None:
     """Close the global Redis client."""
-    global _redis  # noqa: PLW0603
+    global _redis
     if _redis is not None:
         await _redis.close()
         _redis = None
@@ -39,9 +42,7 @@ async def working_memory_get(session_id: str) -> dict[str, Any] | None:
     return json.loads(data)
 
 
-async def working_memory_set(
-    session_id: str, data: dict[str, Any], ttl: int | None = 3600
-) -> None:
+async def working_memory_set(session_id: str, data: dict[str, Any], ttl: int | None = 3600) -> None:
     """Store working memory for a session with optional TTL."""
     import json
 
@@ -60,8 +61,8 @@ async def embedding_cache_get(text: str) -> list[float] | None:
         cached = await client.get(key)
         if cached:
             return json.loads(cached)
-    except Exception:  # noqa: BLE001
-        pass
+    except Exception:
+        logger.debug("redis embedding cache read failed", exc_info=True)
     return None
 
 
@@ -74,5 +75,5 @@ async def embedding_cache_set(text: str, vector: list[float], ttl: int = 86_400)
     try:
         client = await get_redis()
         await client.set(key, json.dumps(vector), ex=ttl)
-    except Exception:  # noqa: BLE001
-        pass
+    except Exception:
+        logger.debug("redis embedding cache write failed", exc_info=True)

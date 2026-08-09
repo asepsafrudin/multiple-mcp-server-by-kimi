@@ -33,6 +33,7 @@ def _get_bot():
     if not settings.telegram_bot_token:
         raise RuntimeError("TELEGRAM_BOT_TOKEN not configured.")
     from telegram import Bot
+
     return Bot(token=settings.telegram_bot_token)
 
 
@@ -74,4 +75,5 @@ async def telegram_get_updates(limit: int = 10) -> list[dict]:
 
 if __name__ == "__main__":
     from shared.server_runner import run
+
     run(mcp)

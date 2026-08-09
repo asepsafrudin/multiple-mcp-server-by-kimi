@@ -31,7 +31,9 @@ mcp = FastMCP(
 def _get_service():
     settings = get_settings()
     if not settings.gmail_credentials_path or not settings.gmail_token_path:
-        raise RuntimeError("Gmail credentials not configured. Set GMAIL_CREDENTIALS_PATH and GMAIL_TOKEN_PATH.")
+        raise RuntimeError(
+            "Gmail credentials not configured. Set GMAIL_CREDENTIALS_PATH and GMAIL_TOKEN_PATH."
+        )
 
     from google.auth.transport.requests import Request
     from google.oauth2.credentials import Credentials
@@ -40,7 +42,9 @@ def _get_service():
     creds = None
     token_path = Path(settings.gmail_token_path)
     if token_path.exists():
-        creds = Credentials.from_authorized_user_file(str(token_path), ["https://www.googleapis.com/auth/gmail.modify"])
+        creds = Credentials.from_authorized_user_file(
+            str(token_path), ["https://www.googleapis.com/auth/gmail.modify"]
+        )
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
@@ -55,9 +59,9 @@ async def gmail_list_messages(max_results: int = 10, query: str = "") -> list[di
     """List recent Gmail messages matching an optional query."""
     try:
         service = _get_service()
-        result = service.users().messages().list(
-            userId="me", q=query, maxResults=max_results
-        ).execute()
+        result = (
+            service.users().messages().list(userId="me", q=query, maxResults=max_results).execute()
+        )
         return result.get("messages", [])
     except Exception as exc:  # noqa: BLE001
         logger.error("gmail_list_failed", error=str(exc))
@@ -97,4 +101,5 @@ async def gmail_get_message(message_id: str) -> dict:
 
 if __name__ == "__main__":
     from shared.server_runner import run
+
     run(mcp)

@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from shared.config import get_settings
-from shared.security import SafePath, UnsafePathError
+from shared.security import SafePath
 
 
 def _check_size(path: Path) -> None:
@@ -38,9 +38,7 @@ async def write_file(path: str, content: str, encoding: str = "utf-8") -> str:
     return f"Wrote {size} bytes to {safe.path}"
 
 
-async def list_directory(
-    path: str = ".", show_hidden: bool = False
-) -> list[dict[str, Any]]:
+async def list_directory(path: str = ".", show_hidden: bool = False) -> list[dict[str, Any]]:
     """List directory contents with basic metadata."""
     safe = SafePath(path)
     if not safe.path.is_dir():

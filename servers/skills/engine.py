@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import uuid
 from contextlib import asynccontextmanager
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -65,7 +65,7 @@ _db: aiosqlite.Connection | None = None
 @asynccontextmanager
 async def _connect():
     """Provide an aiosqlite connection with sqlite-vec loaded."""
-    global _db  # noqa: PLW0603
+    global _db
     settings = get_settings()
     db_path = Path(settings.memory_db_path).parent / "skills_v2.db"
     db_path.parent.mkdir(parents=True, exist_ok=True)
@@ -88,7 +88,9 @@ async def ensure_skills_tables() -> None:
                 try:
                     await db.execute(stmt)
                 except Exception as exc:  # noqa: BLE001
-                    logger.warning("ensure_table_statement_failed", statement=stmt[:60], error=str(exc))
+                    logger.warning(
+                        "ensure_table_statement_failed", statement=stmt[:60], error=str(exc)
+                    )
 
         for stmt in (_FTS_SCHEMA.strip(), _VEC_SCHEMA.strip()):
             try:
@@ -99,7 +101,7 @@ async def ensure_skills_tables() -> None:
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def _row_to_skill(row: aiosqlite.Row) -> Skill:
@@ -232,8 +234,7 @@ async def list_skills(
 ) -> list[Skill]:
     """List registered skills with optional filters."""
     await ensure_skills_tables()
-    if limit > 200:
-        limit = 200
+    limit = min(limit, 200)
 
     sql = "SELECT * FROM skills WHERE 1=1"
     params: list[Any] = []
@@ -259,8 +260,7 @@ async def recall(
 ) -> list[dict[str, Any]]:
     """Semantic + keyword recall of skills matching the query."""
     await ensure_skills_tables()
-    if limit > 20:
-        limit = 20
+    limit = min(limit, 20)
 
     try:
         query_embedding = await get_embedding(query)
@@ -347,8 +347,13 @@ async def update(name: str, namespace: str, updates: dict[str, Any]) -> bool:
     """Update specific fields of an existing skill."""
     await ensure_skills_tables()
     allowed = {
-        "category", "description", "triggers", "prompt_template",
-        "tools_required", "examples", "version",
+        "category",
+        "description",
+        "triggers",
+        "prompt_template",
+        "tools_required",
+        "examples",
+        "version",
     }
     filtered = {k: v for k, v in updates.items() if k in allowed}
     if not filtered:
@@ -364,7 +369,7 @@ async def update(name: str, namespace: str, updates: dict[str, Any]) -> bool:
 
     async with _connect() as db:
         cur = await db.execute(
-            f"UPDATE skills SET {set_clause} WHERE name = ? AND namespace = ? RETURNING id, rowid",  # noqa: S608
+            f"UPDATE skills SET {set_clause} WHERE name = ? AND namespace = ? RETURNING id, rowid",
             params,
         )
         row = await cur.fetchone()

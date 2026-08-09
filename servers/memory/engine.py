@@ -5,8 +5,7 @@ from __future__ import annotations
 import json
 import uuid
 from contextlib import asynccontextmanager
-from datetime import datetime, timedelta, timezone
-from pathlib import Path
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import aiosqlite
@@ -73,7 +72,7 @@ _db: aiosqlite.Connection | None = None
 @asynccontextmanager
 async def _connect():
     """Provide an aiosqlite connection with sqlite-vec loaded."""
-    global _db  # noqa: PLW0603
+    global _db
     settings = get_settings()
     db_path = settings.memory_db_path
     db_path.parent.mkdir(parents=True, exist_ok=True)
@@ -96,7 +95,9 @@ async def ensure_memories_table() -> None:
                 try:
                     await db.execute(stmt)
                 except Exception as exc:  # noqa: BLE001
-                    logger.warning("ensure_table_statement_failed", statement=stmt[:60], error=str(exc))
+                    logger.warning(
+                        "ensure_table_statement_failed", statement=stmt[:60], error=str(exc)
+                    )
 
         for stmt in (_FTS_SCHEMA.strip(), _VEC_SCHEMA.strip()):
             try:
@@ -107,7 +108,7 @@ async def ensure_memories_table() -> None:
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def _row_to_entry(row: aiosqlite.Row) -> MemoryEntry:
@@ -165,12 +166,24 @@ async def store(entry: MemoryEntry) -> str:
             RETURNING rowid
             """,
             (
-                entry.id, entry.namespace, entry.content, entry.summary,
-                entry.category, json.dumps(entry.tags), entry.importance,
-                entry.access_count, entry.quant_level, entry.memory_type,
-                entry.validation_status, entry.source_task_id,
-                int(entry.is_archived), entry.source, entry.project,
-                entry.created_at or now, now, entry.expires_at,
+                entry.id,
+                entry.namespace,
+                entry.content,
+                entry.summary,
+                entry.category,
+                json.dumps(entry.tags),
+                entry.importance,
+                entry.access_count,
+                entry.quant_level,
+                entry.memory_type,
+                entry.validation_status,
+                entry.source_task_id,
+                int(entry.is_archived),
+                entry.source,
+                entry.project,
+                entry.created_at or now,
+                now,
+                entry.expires_at,
             ),
         )
         row = await cur.fetchone()
@@ -181,7 +194,14 @@ async def store(entry: MemoryEntry) -> str:
             INSERT INTO memory_fts(memory_id, namespace, content, summary, category, tags)
             VALUES (?, ?, ?, ?, ?, ?)
             """,
-            (entry.id, entry.namespace, entry.content, entry.summary, entry.category, json.dumps(entry.tags)),
+            (
+                entry.id,
+                entry.namespace,
+                entry.content,
+                entry.summary,
+                entry.category,
+                json.dumps(entry.tags),
+            ),
         )
         await db.execute(
             "INSERT INTO memory_vec(rowid, embedding) VALUES (?, ?)",
@@ -223,8 +243,7 @@ async def recall(
     min_importance: int = 1,
 ) -> list[MemoryEntry]:
     await ensure_memories_table()
-    if limit > 20:
-        limit = 20
+    limit = min(limit, 20)
 
     try:
         query_embedding = await get_embedding(query)
@@ -266,7 +285,6 @@ async def recall(
                 if dist >= 1.5:
                     continue
                 entry = _row_to_entry(row)
-                entry.access_count  # placeholder; score could be attached later
                 results.append(entry)
                 ids.append(entry.id)
         else:
@@ -297,7 +315,7 @@ async def recall(
         if ids:
             placeholders = ",".join("?" for _ in ids)
             await db.execute(
-                f"UPDATE memories SET access_count = access_count + 1, updated_at = ? WHERE id IN ({placeholders})",  # noqa: S608
+                f"UPDATE memories SET access_count = access_count + 1, updated_at = ? WHERE id IN ({placeholders})",
                 (_now(), *ids),
             )
             await db.commit()
@@ -313,8 +331,7 @@ async def search_by_filters(
     limit: int = 10,
 ) -> list[MemoryEntry]:
     await ensure_memories_table()
-    if limit > 50:
-        limit = 50
+    limit = min(limit, 50)
 
     sql = """
         SELECT id, namespace, content, summary, category, tags, importance,
@@ -331,7 +348,7 @@ async def search_by_filters(
         sql += " AND project = ?"
         params.append(project)
     if since_days:
-        cutoff = (datetime.now(timezone.utc) - timedelta(days=since_days)).isoformat()
+        cutoff = (datetime.now(UTC) - timedelta(days=since_days)).isoformat()
         sql += " AND created_at >= ?"
         params.append(cutoff)
     if tags:
@@ -351,9 +368,19 @@ async def search_by_filters(
 async def update(memory_id: str, namespace: str, updates: dict[str, Any]) -> bool:
     await ensure_memories_table()
     allowed = {
-        "content", "summary", "category", "tags", "importance", "quant_level",
-        "memory_type", "validation_status", "source_task_id", "is_archived",
-        "source", "project", "expires_at",
+        "content",
+        "summary",
+        "category",
+        "tags",
+        "importance",
+        "quant_level",
+        "memory_type",
+        "validation_status",
+        "source_task_id",
+        "is_archived",
+        "source",
+        "project",
+        "expires_at",
     }
     filtered = {k: v for k, v in updates.items() if k in allowed}
     if not filtered:
@@ -368,7 +395,7 @@ async def update(memory_id: str, namespace: str, updates: dict[str, Any]) -> boo
 
     async with _connect() as db:
         cur = await db.execute(
-            f"UPDATE memories SET {set_clause} WHERE id = ? AND namespace = ? RETURNING rowid",  # noqa: S608
+            f"UPDATE memories SET {set_clause} WHERE id = ? AND namespace = ? RETURNING rowid",
             params,
         )
         row = await cur.fetchone()
@@ -397,7 +424,14 @@ async def update(memory_id: str, namespace: str, updates: dict[str, Any]) -> boo
                 await db.execute("DELETE FROM memory_fts WHERE memory_id = ?", (memory_id,))
                 await db.execute(
                     "INSERT INTO memory_fts(memory_id, namespace, content, summary, category, tags) VALUES (?, ?, ?, ?, ?, ?)",
-                    (memory_id, namespace, data["content"], data["summary"], data["category"], data["tags"]),
+                    (
+                        memory_id,
+                        namespace,
+                        data["content"],
+                        data["summary"],
+                        data["category"],
+                        data["tags"],
+                    ),
                 )
         await db.commit()
     return True
@@ -468,9 +502,9 @@ async def cleanup_expired() -> int:
             rowids = [r["rowid"] for r in rows]
             id_ph = ",".join("?" for _ in ids)
             rid_ph = ",".join("?" for _ in rowids)
-            await db.execute(f"DELETE FROM memory_fts WHERE memory_id IN ({id_ph})", ids)  # noqa: S608
-            await db.execute(f"DELETE FROM memory_vec WHERE rowid IN ({rid_ph})", rowids)  # noqa: S608
-            await db.execute(f"DELETE FROM memories WHERE id IN ({id_ph})", ids)  # noqa: S608
+            await db.execute(f"DELETE FROM memory_fts WHERE memory_id IN ({id_ph})", ids)
+            await db.execute(f"DELETE FROM memory_vec WHERE rowid IN ({rid_ph})", rowids)
+            await db.execute(f"DELETE FROM memories WHERE id IN ({id_ph})", ids)
             await db.commit()
         return len(rows)
 
@@ -479,7 +513,9 @@ async def get_stats(namespace: str | None = None) -> dict[str, Any]:
     await ensure_memories_table()
     async with _connect() as db:
         if namespace:
-            cur = await db.execute("SELECT COUNT(*) FROM memories WHERE namespace = ?", (namespace,))
+            cur = await db.execute(
+                "SELECT COUNT(*) FROM memories WHERE namespace = ?", (namespace,)
+            )
         else:
             cur = await db.execute("SELECT COUNT(*) FROM memories")
         total = (await cur.fetchone())[0]

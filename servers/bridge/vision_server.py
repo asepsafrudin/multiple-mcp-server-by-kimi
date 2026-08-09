@@ -36,6 +36,7 @@ def _get_access_token() -> str:
         raise RuntimeError("GOOGLE_VISION_CREDENTIALS_PATH not configured")
 
     from google.oauth2 import service_account
+
     credentials = service_account.Credentials.from_service_account_file(
         str(creds_path),
         scopes=["https://www.googleapis.com/auth/cloud-vision"],
@@ -57,10 +58,12 @@ async def vision_ocr(image_path: str) -> dict:
 
         url = "https://vision.googleapis.com/v1/images:annotate"
         payload = {
-            "requests": [{
-                "image": {"content": encoded},
-                "features": [{"type": "TEXT_DETECTION", "maxResults": 1}],
-            }]
+            "requests": [
+                {
+                    "image": {"content": encoded},
+                    "features": [{"type": "TEXT_DETECTION", "maxResults": 1}],
+                }
+            ]
         }
 
         async with httpx.AsyncClient(timeout=60.0) as client:
@@ -82,4 +85,5 @@ async def vision_ocr(image_path: str) -> dict:
 
 if __name__ == "__main__":
     from shared.server_runner import run
+
     run(mcp)

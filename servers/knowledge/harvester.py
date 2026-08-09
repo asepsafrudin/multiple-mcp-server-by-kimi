@@ -7,35 +7,101 @@ import mimetypes
 from pathlib import Path
 from typing import Any
 
+from servers.knowledge.chunking import chunk_file
+from servers.knowledge.engine import index_chunks
 from shared.config import get_settings
 from shared.logging import get_logger
 from shared.models import KnowledgeChunk
-from servers.knowledge.chunking import chunk_file
-from servers.knowledge.engine import index_chunks
 
 logger = get_logger("mcp.knowledge.harvester")
 
 TEXT_EXTENSIONS = {
-    ".txt", ".md", ".markdown", ".py", ".js", ".ts", ".jsx", ".tsx",
-    ".json", ".yaml", ".yml", ".toml", ".ini", ".cfg", ".conf",
-    ".sh", ".bash", ".zsh", ".fish", ".ps1",
-    ".html", ".htm", ".css", ".scss", ".less",
-    ".sql", ".c", ".cpp", ".h", ".hpp", ".go", ".rs", ".java",
-    ".rb", ".php", ".swift", ".kt", ".kts", ".cs", ".fs",
-    ".xml", ".svg", ".graphql", ".prisma",
+    ".txt",
+    ".md",
+    ".markdown",
+    ".py",
+    ".js",
+    ".ts",
+    ".jsx",
+    ".tsx",
+    ".json",
+    ".yaml",
+    ".yml",
+    ".toml",
+    ".ini",
+    ".cfg",
+    ".conf",
+    ".sh",
+    ".bash",
+    ".zsh",
+    ".fish",
+    ".ps1",
+    ".html",
+    ".htm",
+    ".css",
+    ".scss",
+    ".less",
+    ".sql",
+    ".c",
+    ".cpp",
+    ".h",
+    ".hpp",
+    ".go",
+    ".rs",
+    ".java",
+    ".rb",
+    ".php",
+    ".swift",
+    ".kt",
+    ".kts",
+    ".cs",
+    ".fs",
+    ".xml",
+    ".svg",
+    ".graphql",
+    ".prisma",
 }
 
 IGNORED_DIRS = {
-    ".git", ".hg", ".svn", "node_modules", "__pycache__", ".venv",
-    "venv", "env", ".tox", ".pytest_cache", ".mypy_cache", ".ruff_cache",
-    "dist", "build", "target", ".next", ".nuxt", ".idea", ".vscode",
-    "coverage", ".coverage", "htmlcov", "site-packages", "egg-info",
+    ".git",
+    ".hg",
+    ".svn",
+    "node_modules",
+    "__pycache__",
+    ".venv",
+    "venv",
+    "env",
+    ".tox",
+    ".pytest_cache",
+    ".mypy_cache",
+    ".ruff_cache",
+    "dist",
+    "build",
+    "target",
+    ".next",
+    ".nuxt",
+    ".idea",
+    ".vscode",
+    "coverage",
+    ".coverage",
+    "htmlcov",
+    "site-packages",
+    "egg-info",
 }
 
 IGNORED_FILES = {
-    ".env", ".env.local", ".env.production", ".envrc", ".pnp.js",
-    "package-lock.json", "yarn.lock", "pnpm-lock.yaml", "poetry.lock",
-    "Cargo.lock", "Gemfile.lock", "composer.lock",
+    ".env",
+    ".env.local",
+    ".env.production",
+    ".envrc",
+    ".pnp.js",
+    "package-lock.json",
+    "yarn.lock",
+    "pnpm-lock.yaml",
+    "poetry.lock",
+    "Cargo.lock",
+    "Gemfile.lock",
+    "composer.lock",
 }
 
 
@@ -43,9 +109,7 @@ def _is_text_file(path: Path) -> bool:
     if path.suffix.lower() in TEXT_EXTENSIONS:
         return True
     mime, _ = mimetypes.guess_type(str(path))
-    if mime and mime.startswith("text/"):
-        return True
-    return False
+    return bool(mime and mime.startswith("text/"))
 
 
 def _should_skip(path: Path) -> bool:
@@ -53,9 +117,7 @@ def _should_skip(path: Path) -> bool:
         return True
     if path.name in IGNORED_FILES:
         return True
-    if path.name.startswith(".") and path.suffix in {".pyc", ".pyo", ".so", ".dylib", ".dll"}:
-        return True
-    return False
+    return path.name.startswith(".") and path.suffix in {".pyc", ".pyo", ".so", ".dylib", ".dll"}
 
 
 def _file_hash(content: bytes) -> str:

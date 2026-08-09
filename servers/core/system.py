@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 import platform
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import psutil
@@ -14,7 +14,7 @@ async def get_system_info() -> dict[str, Any]:
     """Return basic host system statistics."""
     mem = psutil.virtual_memory()
     return {
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "os": platform.system(),
         "os_version": platform.release(),
         "architecture": platform.machine(),

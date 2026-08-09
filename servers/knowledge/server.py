@@ -11,9 +11,8 @@ if str(ROOT) not in sys.path:
 
 from fastmcp import FastMCP
 
-from shared.config import get_settings
-from shared.logging import configure_logging
 from servers.knowledge import engine, harvester
+from shared.logging import configure_logging
 
 configure_logging()
 
@@ -27,7 +26,9 @@ mcp = FastMCP(
 
 
 @mcp.tool()
-async def knowledge_index(project: str, root: str | None = None, max_files: int | None = None) -> dict:
+async def knowledge_index(
+    project: str, root: str | None = None, max_files: int | None = None
+) -> dict:
     """Harvest and index a workspace project into searchable knowledge chunks.
 
     project: logical project name used for namespacing.
@@ -45,8 +46,7 @@ async def knowledge_index(project: str, root: str | None = None, max_files: int 
 @mcp.tool()
 async def knowledge_search(query: str, project: str | None = None, limit: int = 5) -> list[dict]:
     """Search knowledge chunks using hybrid semantic + keyword retrieval."""
-    if limit > 20:
-        limit = 20
+    limit = min(limit, 20)
     return await engine.search(query=query, project=project, limit=limit)
 
 
@@ -63,7 +63,9 @@ async def knowledge_forget_project(project: str) -> dict:
 
 
 @mcp.tool()
-async def knowledge_reindex(project: str, root: str | None = None, max_files: int | None = None) -> dict:
+async def knowledge_reindex(
+    project: str, root: str | None = None, max_files: int | None = None
+) -> dict:
     """Clear a project's knowledge index and re-harvest it."""
     await engine.delete_project(project)
     return await harvester.harvest_project(
@@ -75,4 +77,5 @@ async def knowledge_reindex(project: str, root: str | None = None, max_files: in
 
 if __name__ == "__main__":
     from shared.server_runner import run
+
     run(mcp)

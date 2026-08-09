@@ -5,8 +5,7 @@ from __future__ import annotations
 import json
 import uuid
 from contextlib import asynccontextmanager
-from datetime import datetime, timezone
-from pathlib import Path
+from datetime import UTC, datetime
 from typing import Any
 
 import aiosqlite
@@ -60,7 +59,7 @@ _db: aiosqlite.Connection | None = None
 @asynccontextmanager
 async def _connect():
     """Provide an aiosqlite connection with sqlite-vec loaded."""
-    global _db  # noqa: PLW0603
+    global _db
     settings = get_settings()
     db_path = settings.knowledge_db_path
     db_path.parent.mkdir(parents=True, exist_ok=True)
@@ -83,7 +82,9 @@ async def ensure_knowledge_tables() -> None:
                 try:
                     await db.execute(stmt)
                 except Exception as exc:  # noqa: BLE001
-                    logger.warning("ensure_table_statement_failed", statement=stmt[:60], error=str(exc))
+                    logger.warning(
+                        "ensure_table_statement_failed", statement=stmt[:60], error=str(exc)
+                    )
 
         for stmt in (_FTS_SCHEMA.strip(), _VEC_SCHEMA.strip()):
             try:
@@ -94,7 +95,7 @@ async def ensure_knowledge_tables() -> None:
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def _row_to_chunk(row: aiosqlite.Row) -> KnowledgeChunk:
@@ -147,7 +148,7 @@ async def index_chunks(chunks: list[KnowledgeChunk]) -> dict[str, Any]:
         # Delete stale chunks for the affected files first.
         placeholders = ",".join("?" for _ in file_paths)
         cur = await db.execute(
-            f"SELECT id, rowid FROM knowledge_chunks WHERE project = ? AND file_path IN ({placeholders})",  # noqa: S608
+            f"SELECT id, rowid FROM knowledge_chunks WHERE project = ? AND file_path IN ({placeholders})",
             (project, *file_paths),
         )
         stale_rows = await cur.fetchall()
@@ -157,17 +158,17 @@ async def index_chunks(chunks: list[KnowledgeChunk]) -> dict[str, Any]:
         if stale_ids:
             id_ph = ",".join("?" for _ in stale_ids)
             await db.execute(
-                f"DELETE FROM knowledge_fts WHERE chunk_id IN ({id_ph})",  # noqa: S608
+                f"DELETE FROM knowledge_fts WHERE chunk_id IN ({id_ph})",
                 stale_ids,
             )
         if stale_rowids:
             rid_ph = ",".join("?" for _ in stale_rowids)
             await db.execute(
-                f"DELETE FROM knowledge_vec WHERE rowid IN ({rid_ph})",  # noqa: S608
+                f"DELETE FROM knowledge_vec WHERE rowid IN ({rid_ph})",
                 stale_rowids,
             )
         await db.execute(
-            f"DELETE FROM knowledge_chunks WHERE project = ? AND file_path IN ({placeholders})",  # noqa: S608
+            f"DELETE FROM knowledge_chunks WHERE project = ? AND file_path IN ({placeholders})",
             (project, *file_paths),
         )
 
@@ -220,8 +221,7 @@ async def search(
 ) -> list[dict[str, Any]]:
     """Hybrid semantic + keyword search over knowledge chunks."""
     await ensure_knowledge_tables()
-    if limit > 20:
-        limit = 20
+    limit = min(limit, 20)
 
     from shared.embeddings import get_embedding
 
@@ -259,17 +259,19 @@ async def search(
                     continue
                 chunk = _row_to_chunk(row)
                 seen_ids.add(chunk.id)
-                results.append({
-                    "id": chunk.id,
-                    "project": chunk.project,
-                    "file_path": chunk.file_path,
-                    "file_type": chunk.file_type,
-                    "chunk_index": chunk.chunk_index,
-                    "total_chunks": chunk.total_chunks,
-                    "content": chunk.content[:800],
-                    "metadata": chunk.metadata,
-                    "distance": dist,
-                })
+                results.append(
+                    {
+                        "id": chunk.id,
+                        "project": chunk.project,
+                        "file_path": chunk.file_path,
+                        "file_type": chunk.file_type,
+                        "chunk_index": chunk.chunk_index,
+                        "total_chunks": chunk.total_chunks,
+                        "content": chunk.content[:800],
+                        "metadata": chunk.metadata,
+                        "distance": dist,
+                    }
+                )
 
         # Fallback / supplement with FTS5.
         if len(results) < limit:
@@ -294,17 +296,19 @@ async def search(
                 if chunk.id in seen_ids:
                     continue
                 seen_ids.add(chunk.id)
-                results.append({
-                    "id": chunk.id,
-                    "project": chunk.project,
-                    "file_path": chunk.file_path,
-                    "file_type": chunk.file_type,
-                    "chunk_index": chunk.chunk_index,
-                    "total_chunks": chunk.total_chunks,
-                    "content": chunk.content[:800],
-                    "metadata": chunk.metadata,
-                    "distance": None,
-                })
+                results.append(
+                    {
+                        "id": chunk.id,
+                        "project": chunk.project,
+                        "file_path": chunk.file_path,
+                        "file_type": chunk.file_type,
+                        "chunk_index": chunk.chunk_index,
+                        "total_chunks": chunk.total_chunks,
+                        "content": chunk.content[:800],
+                        "metadata": chunk.metadata,
+                        "distance": None,
+                    }
+                )
 
         if not results:
             return [{"status": "no_results", "message": f"No knowledge matches: '{query}'"}]
@@ -325,7 +329,7 @@ async def delete_project(project: str) -> dict[str, Any]:
         if rowids:
             placeholders = ",".join("?" for _ in rowids)
             await db.execute(
-                f"DELETE FROM knowledge_vec WHERE rowid IN ({placeholders})",  # noqa: S608
+                f"DELETE FROM knowledge_vec WHERE rowid IN ({placeholders})",
                 rowids,
             )
         await db.execute("DELETE FROM knowledge_chunks WHERE project = ?", (project,))

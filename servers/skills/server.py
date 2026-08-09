@@ -11,10 +11,10 @@ if str(ROOT) not in sys.path:
 
 from fastmcp import FastMCP
 
+from servers.skills import engine, loader
 from shared.config import get_settings
 from shared.logging import configure_logging
 from shared.models import Skill
-from servers.skills import engine, loader
 
 configure_logging()
 
@@ -58,8 +58,7 @@ async def skill_register(
 @mcp.tool()
 async def skill_recall(query: str, namespace: str | None = None, limit: int = 5) -> list[dict]:
     """Recall skills matching the query using semantic + keyword search."""
-    if limit > 20:
-        limit = 20
+    limit = min(limit, 20)
     return await engine.recall(query=query, namespace=namespace, limit=limit)
 
 
@@ -70,19 +69,21 @@ async def skill_list(
     limit: int = 50,
 ) -> list[dict]:
     """List registered skills."""
-    if limit > 200:
-        limit = 200
+    limit = min(limit, 200)
     skills = await engine.list_skills(namespace=namespace, category=category, limit=limit)
-    return [{
-        "id": s.id,
-        "name": s.name,
-        "namespace": s.namespace,
-        "category": s.category,
-        "description": s.description,
-        "triggers": s.triggers,
-        "tools_required": s.tools_required,
-        "version": s.version,
-    } for s in skills]
+    return [
+        {
+            "id": s.id,
+            "name": s.name,
+            "namespace": s.namespace,
+            "category": s.category,
+            "description": s.description,
+            "triggers": s.triggers,
+            "tools_required": s.tools_required,
+            "version": s.version,
+        }
+        for s in skills
+    ]
 
 
 @mcp.tool()
@@ -141,4 +142,5 @@ async def skill_load_registry(registry_dir: str | None = None) -> dict:
 
 if __name__ == "__main__":
     from shared.server_runner import run
+
     run(mcp)

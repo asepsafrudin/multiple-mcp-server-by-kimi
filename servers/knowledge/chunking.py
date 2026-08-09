@@ -30,7 +30,9 @@ def _split_by_size(parts: list[str], max_tokens: int, overlap_tokens: int) -> li
                     chunks.append(" ".join(buffer))
                     # overlap
                     if overlap_tokens > 0:
-                        overlap = buffer[-overlap_tokens:] if overlap_tokens < len(buffer) else buffer
+                        overlap = (
+                            buffer[-overlap_tokens:] if overlap_tokens < len(buffer) else buffer
+                        )
                         buffer = overlap
                         buffer_tokens = len(overlap)
                     else:

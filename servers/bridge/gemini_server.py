@@ -75,4 +75,5 @@ async def gemini_generate(
 
 if __name__ == "__main__":
     from shared.server_runner import run
+
     run(mcp)

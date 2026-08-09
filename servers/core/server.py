@@ -12,8 +12,8 @@ if str(ROOT) not in sys.path:
 
 from fastmcp import FastMCP
 
+from servers.core import filesystem, security, shell, system, web
 from shared.logging import configure_logging
-from servers.core import filesystem, shell, system, web, security
 
 configure_logging()
 
@@ -119,9 +119,7 @@ async def sanitize_string(text: str, max_length: int = 10000) -> str:
 
 
 @mcp.tool()
-async def audit_log(
-    action: str, resource: str, result: str, metadata: dict | None = None
-) -> str:
+async def audit_log(action: str, resource: str, result: str, metadata: dict | None = None) -> str:
     """Append a structured audit log entry."""
     return await security.audit_log(action, resource, result, metadata)
 
@@ -134,4 +132,5 @@ async def hash_string(text: str, algorithm: str = "sha256") -> str:
 
 if __name__ == "__main__":
     from shared.server_runner import run
+
     run(mcp)

@@ -4,13 +4,12 @@ from __future__ import annotations
 
 import asyncio
 import shlex
-import shutil
 from pathlib import Path
 from typing import Any
 
 from shared.config import get_settings
 from shared.logging import get_logger
-from shared.security import SafePath, UnsafePathError
+from shared.security import UnsafePathError
 
 logger = get_logger("mcp.core.shell")
 
@@ -71,8 +70,7 @@ async def run_shell(
         timeout: Maximum execution time in seconds (max 300).
         env_extras: Additional environment variables.
     """
-    if timeout > 300:
-        timeout = 300
+    timeout = min(timeout, 300)
 
     parts = _validate_command(command)
 
@@ -97,7 +95,7 @@ async def run_shell(
             stderr=asyncio.subprocess.PIPE,
         )
         stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=timeout)
-    except asyncio.TimeoutError:
+    except TimeoutError:
         proc.kill()
         await proc.wait()
         logger.warning("shell_command_timeout", command=parts[0])
