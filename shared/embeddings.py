@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
+import math
 from typing import Any
 
 import httpx
@@ -16,15 +16,23 @@ class EmbeddingError(RuntimeError):
     pass
 
 
+def _normalize(vector: list[float]) -> list[float]:
+    """L2-normalise a vector so distance metrics are comparable."""
+    norm = math.sqrt(sum(x * x for x in vector))
+    if norm == 0:
+        return vector
+    return [x / norm for x in vector]
+
+
 async def get_embedding(text: str, *, force_refresh: bool = False) -> list[float]:
-    """Generate a vector embedding via local Ollama, using Redis cache."""
+    """Generate a normalised vector embedding via local Ollama, using Redis cache."""
     settings = get_settings()
     text = text[:2000]  # guard against huge payloads
 
     if not force_refresh:
         cached = await embedding_cache_get(text)
         if cached:
-            return cached
+            return _normalize(cached)
 
     payload = {
         "model": settings.ollama_embedding_model,
@@ -43,8 +51,9 @@ async def get_embedding(text: str, *, force_refresh: bool = False) -> list[float
     if not embedding or not isinstance(embedding, list):
         raise EmbeddingError(f"Unexpected Ollama response: {json.dumps(data)[:200]}")
 
-    await embedding_cache_set(text, embedding)
-    return embedding
+    normalized = _normalize(embedding)
+    await embedding_cache_set(text, normalized)
+    return normalized
 
 
 async def get_embeddings(texts: list[str]) -> list[list[float]]:

@@ -50,23 +50,29 @@ async def working_memory_set(
 
 
 async def embedding_cache_get(text: str) -> list[float] | None:
-    """Try to fetch a cached embedding vector."""
+    """Try to fetch a cached embedding vector. Redis failure is non-fatal."""
     import hashlib
     import json
 
     key = f"emb:{hashlib.sha256(text.encode()).hexdigest()}"
-    client = await get_redis()
-    cached = await client.get(key)
-    if cached:
-        return json.loads(cached)
+    try:
+        client = await get_redis()
+        cached = await client.get(key)
+        if cached:
+            return json.loads(cached)
+    except Exception:  # noqa: BLE001
+        pass
     return None
 
 
 async def embedding_cache_set(text: str, vector: list[float], ttl: int = 86_400) -> None:
-    """Cache an embedding vector."""
+    """Cache an embedding vector. Redis failure is non-fatal."""
     import hashlib
     import json
 
     key = f"emb:{hashlib.sha256(text.encode()).hexdigest()}"
-    client = await get_redis()
-    await client.set(key, json.dumps(vector), ex=ttl)
+    try:
+        client = await get_redis()
+        await client.set(key, json.dumps(vector), ex=ttl)
+    except Exception:  # noqa: BLE001
+        pass
