@@ -70,6 +70,7 @@ Daftar tugas & status implementasi `MCP Aseps`. Perbarui checklist ini seiring p
 - [x] `MEMORY.md`, `KNOWLEDGE.md`, `SKILLS.md`
 - [x] `SECURITY.md`, `DEPLOYMENT.md`
 - [x] `ROADMAP.md`, `TASKS.md`
+- [x] `TODO.md` (arsip test suite — selesai, 59 passed)
 - [ ] License file (MIT disebut di README)
 
 ## Skalabilitas (future)
