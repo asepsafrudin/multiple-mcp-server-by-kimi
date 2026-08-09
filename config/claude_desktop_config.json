@@ -1,0 +1,23 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/home/aseps"
+      ]
+    },
+    "mcp-unified": {
+      "command": "/home/aseps/MCP/.venv/bin/python",
+      "args": [
+        "/home/aseps/MCP/mcp_unified/core/server.py"
+      ],
+      "env": {
+        "PYTHONPATH": "/home/aseps/MCP",
+        "MCP_LOG_LEVEL": "INFO"
+      },
+      "description": "Unified MCP Server — File Ops, Shell, Memory (Vector DB), Vision (OCR+AI), Web Fetch, Gmail, Gemini AI, Telegram."
+    }
+  }
+}

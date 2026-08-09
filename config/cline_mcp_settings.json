@@ -1,0 +1,65 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/home/aseps"
+      ]
+    },
+    "bash": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-everything",
+        "stdio"
+      ]
+    },
+    "bash-server": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-everything",
+        "--allowed-command",
+        "bash",
+        "--allowed-command",
+        "ls",
+        "--allowed-command",
+        "pwd",
+        "--allowed-command",
+        "cat",
+        "--allowed-command",
+        "grep",
+        "--allowed-command",
+        "find",
+        "--allowed-command",
+        "ps",
+        "--allowed-command",
+        "top",
+        "--allowed-command",
+        "df",
+        "--allowed-command",
+        "du"
+      ]
+    },
+    "mcp-unified": {
+      "command": "/home/aseps/MCP/.venv/bin/python",
+      "args": [
+        "/home/aseps/MCP/mcp_unified/core/server.py"
+      ],
+      "env": {
+        "PYTHONPATH": "/home/aseps/MCP",
+        "MCP_LOG_LEVEL": "INFO"
+      },
+      "description": "Unified MCP Server — File Ops, Shell, Memory, Vision, Web Fetch, Gmail, Gemini AI, Telegram."
+    },
+    "pypi": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "jaegis-pypi-mcp-server"
+      ]
+    }
+  }
+}

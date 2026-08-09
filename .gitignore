@@ -1,9 +1,26 @@
-# Secrets & local environment
+# Config directory: ignore everything by default, whitelist only sample configs.
+config/*
+!config/mcp_universal.json
+!config/claude_desktop_config.json
+!config/cline_mcp_settings.json
+!config/.env.example
+
+# Secrets
 .env
 .env.local
-config/.env
-config/credentials/
+
+# Legacy runtime code & binaries (kept locally, not committed)
+mcp_unified/
+external/
+bin/
 archive/
+
+# Symlinks & editor files
+mcp_config.json
+.agent_identity
+.cursor/
+.vscode/
+.idea/
 
 # Python
 .venv/
@@ -30,10 +47,7 @@ logs/
 node_modules/
 package-lock.json
 
-# Editor / OS
-.cursor/
-.vscode/
-.idea/
+# OS
 .DS_Store
 Thumbs.db
 

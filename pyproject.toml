@@ -42,3 +42,6 @@ exclude = [".venv", "archive", "external"]
 asyncio_mode = "auto"
 testpaths = ["tests"]
 pythonpath = [".", "servers", "shared"]
+
+[tool.setuptools.packages.find]
+include = ["shared", "servers*"]

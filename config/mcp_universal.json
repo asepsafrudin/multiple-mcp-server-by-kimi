@@ -1,0 +1,24 @@
+{
+    "mcpServers": {
+        "mcp-unified": {
+            "command": "/home/aseps/MCP/.venv/bin/python",
+            "args": [
+                "/home/aseps/MCP/mcp_unified/core/server.py"
+            ],
+            "env": {
+                "PYTHONPATH": "/home/aseps/MCP",
+                "MCP_LOG_LEVEL": "INFO"
+            },
+            "description": "MCP Unified Server (Aseps) — 26 tools: File Ops, Shell, Memory (Vector DB + RAG), Vision OCR+AI, Web Fetch, Gmail API, Gemini AI, Telegram."
+        },
+        "filesystem": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-filesystem",
+                "/home/aseps"
+            ],
+            "description": "Native filesystem access untuk seluruh /home/aseps"
+        }
+    }
+}
