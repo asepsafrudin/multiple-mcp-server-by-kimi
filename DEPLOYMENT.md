@@ -26,21 +26,64 @@ Pull model embedding:
 docker exec -it mcp-ollama ollama pull nomic-embed-text
 ```
 
+## Kredensial & .env
+
+Server modular membaca `/home/aseps/MCP/.env` (gitignored, path dikunci otomatis ke
+root proyek — tidak bergantung direktori kerja proses). Nilai env yang di-set lewat
+variabel lingkungan OS menang di atas `.env`.
+
+Key yang dipakai kode (modern):
+
+| Env var | Dipakai server | Contoh |
+|---------|----------------|--------|
+| `GMAIL_CREDENTIALS_PATH` | mcp-gmail (OAuth2) | path ke client-secret / token JSON |
+| `GMAIL_TOKEN_PATH` | mcp-gmail (OAuth2) | path ke token JSON |
+| `GOOGLE_VISION_CREDENTIALS_PATH` | mcp-vision (service account) | path ke JSON |
+| `GEMINI_API_KEY` | mcp-gemini | gemini key |
+| `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` | mcp-telegram | bot token + chat id |
+| `OPENAI_API_KEY` | (cadangan) | — |
+
+> Catatan kompatibilitas: `GOOGLE_VISION_KEY_PATH` (nama lama) tetap diterima sebagai
+> alias `GOOGLE_VISION_CREDENTIALS_PATH`. Key legacy lain (`GOOGLE_GMAIL_KEY_PATH`,
+> `GOOGLE_GMAIL_CLIENT_SECRET`, `OPEN_API_KEY`, `APP_CONFIG_PATH`,
+> `MCP_SERVER_CONFIG_PATH`) **tidak** dipetakan ke server modular saat ini — pakai
+> nama modern di atas. Jangan pernah commit `.env`.
+
+### Setup Gmail (OAuth2, sekali saja)
+
+1. Buka [Google Cloud Console](https://console.cloud.google.com) → *APIs & Services*
+   → aktifkan **Gmail API** → *Credentials* → **OAuth 2.0 Client ID** (jenis Desktop).
+2. Unduh JSON client secret ke `GMAIL_CREDENTIALS_PATH`
+   (`config/credentials/gmail-client-secret.json`).
+3. Jalankan bootstrap OAuth sekali (membuka browser untuk consent):
+   ```bash
+   ./.venv/bin/python scripts/gmail_oauth_setup.py
+   ```
+   Token tersimpan ke `GMAIL_TOKEN_PATH` (`config/credentials/gmail-token.json`).
+4. Reload editor; tool `gmail_*` di mcp-gmail-bridge akan berfungsi.
+
 ## Menjalankan Server
 
 ### 1. Mode stdio untuk Editor
 
-Salin konfigurasi editor yang sesuai:
+Server dibaca sebagai MCP *client* oleh editor; setiap entry me-spawn satu proses stdio.
+Salin konfigurasi editor yang sesuai ke lokasi yang benar:
 
 ```bash
 # Claude Desktop
 mkdir -p ~/.config/claude
 cp config/claude_desktop_config.json ~/.config/claude/config.json
 
-# Cline
-mkdir -p ~/.config/cline
-cp config/cline_mcp_settings.json ~/.config/cline/mcp_settings.json
+# Cline (VS Code) — file aktif dibaca Cline dari ~/.cline/data/settings/
+mkdir -p ~/.cline/data/settings
+cp config/cline_mcp_settings.json ~/.cline/data/settings/cline_mcp_settings.json
 ```
+
+> Catatan: path Cline adalah `~/.cline/data/settings/cline_mcp_settings.json`, bukan
+> `~/.config/cline/mcp_settings.json`. Cline memakai format *nested* `transport`
+> (`.mcpServers.<name>.transport.{type,command,args,env}`) seperti di template.
+>
+> Setelah mengubah config, **reload / restart editor** agar server MCP baru terbaca.
 
 Pastikan path `/home/aseps/MCP/.venv/bin/python` sesuai dengan sistem Anda.
 

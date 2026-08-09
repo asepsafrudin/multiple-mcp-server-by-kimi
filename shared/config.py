@@ -4,7 +4,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Anchor .env to the repository root (this file lives at <root>/shared/config.py),
+# so servers always load the project's credentials regardless of the process CWD
+# (e.g. when spawned by an editor with a different working directory).
+_PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
 class Settings(BaseSettings):
@@ -14,7 +20,7 @@ class Settings(BaseSettings):
     """
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=str(_PROJECT_ROOT / ".env"),
         env_file_encoding="utf-8",
         extra="ignore",
     )
@@ -45,7 +51,14 @@ class Settings(BaseSettings):
     # Optional integrations
     gmail_credentials_path: Path | None = None
     gmail_token_path: Path | None = None
-    google_vision_credentials_path: Path | None = None
+    # Accept both the new GOOGLE_VISION_CREDENTIALS_PATH and the legacy
+    # GOOGLE_VISION_KEY_PATH names (both are service-account JSON).
+    google_vision_credentials_path: Path | None = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "GOOGLE_VISION_CREDENTIALS_PATH", "GOOGLE_VISION_KEY_PATH"
+        ),
+    )
     gemini_api_key: str | None = None
     telegram_bot_token: str | None = None
     telegram_chat_id: str | None = None
