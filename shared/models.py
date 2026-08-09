@@ -80,6 +80,7 @@ class KnowledgeChunk(BaseModel):
 class Skill(BaseModel):
     """A procedural memory / skill entry."""
 
+    id: str = ""
     name: str = Field(..., min_length=1)
     namespace: str = "global"
     category: str = "general"
