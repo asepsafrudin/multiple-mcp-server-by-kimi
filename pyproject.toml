@@ -1,0 +1,44 @@
+[project]
+name = "mcp-aseps"
+version = "0.1.0"
+description = "Modular multi-server MCP suite: core tools, memory, knowledge, skills, and integrations."
+requires-python = ">=3.12"
+dependencies = [
+    "fastmcp>=3.0",
+    "pydantic>=2.0",
+    "pydantic-settings>=2.0",
+    "httpx>=0.27",
+    "psycopg[binary]>=3.2",
+    "psycopg-pool>=3.2",
+    "redis>=5.0",
+    "aiosqlite>=0.22",
+    "sqlalchemy[asyncio]>=2.0",
+    "python-telegram-bot>=21.0",
+    "google-auth>=2.0",
+    "google-auth-httplib2>=0.2",
+    "google-api-python-client>=2.0",
+    "openai>=1.0",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24",
+    "ruff>=0.6",
+    "mypy>=1.11",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+exclude = [".venv", "archive", "external"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+pythonpath = [".", "servers", "shared"]

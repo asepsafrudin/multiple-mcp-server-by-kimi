@@ -1,0 +1,44 @@
+# Secrets & local environment
+.env
+.env.local
+config/.env
+config/credentials/
+archive/
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# Data & logs (runtime artifacts)
+data/
+logs/
+*.log
+*.db
+*.sqlite
+*.sqlite3
+
+# Node / legacy JS
+node_modules/
+package-lock.json
+
+# Editor / OS
+.cursor/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Temporary / backup
+*.bak
+*.tmp
+*.swp
+*~
