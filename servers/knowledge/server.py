@@ -73,9 +73,6 @@ async def knowledge_reindex(project: str, root: str | None = None, max_files: in
     )
 
 
-def main() -> None:
-    mcp.run(transport="stdio")
-
-
 if __name__ == "__main__":
-    main()
+    from shared.server_runner import run
+    run(mcp)

@@ -80,9 +80,6 @@ async def vision_ocr(image_path: str) -> dict:
         return {"status": "error", "error": str(exc)}
 
 
-def main() -> None:
-    mcp.run(transport="stdio")
-
-
 if __name__ == "__main__":
-    main()
+    from shared.server_runner import run
+    run(mcp)

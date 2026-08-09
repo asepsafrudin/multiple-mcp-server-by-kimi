@@ -132,9 +132,6 @@ async def hash_string(text: str, algorithm: str = "sha256") -> str:
     return await security.hash_string(text, algorithm)
 
 
-def main() -> None:
-    mcp.run(transport="stdio")
-
-
 if __name__ == "__main__":
-    main()
+    from shared.server_runner import run
+    run(mcp)

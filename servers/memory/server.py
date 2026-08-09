@@ -167,9 +167,6 @@ async def memory_stats(namespace: str | None = None) -> dict:
     return stats
 
 
-def main() -> None:
-    mcp.run(transport="stdio")
-
-
 if __name__ == "__main__":
-    main()
+    from shared.server_runner import run
+    run(mcp)

@@ -1,24 +1,67 @@
 {
-    "mcpServers": {
-        "mcp-unified": {
-            "command": "/home/aseps/MCP/.venv/bin/python",
-            "args": [
-                "/home/aseps/MCP/mcp_unified/core/server.py"
-            ],
-            "env": {
-                "PYTHONPATH": "/home/aseps/MCP",
-                "MCP_LOG_LEVEL": "INFO"
-            },
-            "description": "MCP Unified Server (Aseps) — 26 tools: File Ops, Shell, Memory (Vector DB + RAG), Vision OCR+AI, Web Fetch, Gmail API, Gemini AI, Telegram."
-        },
-        "filesystem": {
-            "command": "npx",
-            "args": [
-                "-y",
-                "@modelcontextprotocol/server-filesystem",
-                "/home/aseps"
-            ],
-            "description": "Native filesystem access untuk seluruh /home/aseps"
-        }
+  "mcpServers": {
+    "mcp-core-server": {
+      "command": "/home/aseps/MCP/.venv/bin/python",
+      "args": ["-m", "servers.core.server"],
+      "env": {
+        "MCP_ROOT": "/home/aseps/MCP",
+        "LOG_LEVEL": "INFO"
+      }
+    },
+    "mcp-memory-server": {
+      "command": "/home/aseps/MCP/.venv/bin/python",
+      "args": ["-m", "servers.memory.server"],
+      "env": {
+        "MCP_ROOT": "/home/aseps/MCP",
+        "MEMORY_DB_PATH": "/home/aseps/MCP/data/memory_v2.db",
+        "OLLAMA_URL": "http://localhost:11434"
+      }
+    },
+    "mcp-knowledge-server": {
+      "command": "/home/aseps/MCP/.venv/bin/python",
+      "args": ["-m", "servers.knowledge.server"],
+      "env": {
+        "MCP_ROOT": "/home/aseps/MCP",
+        "KNOWLEDGE_DB_PATH": "/home/aseps/MCP/data/knowledge_v2.db",
+        "WORKSPACE_ROOT": "/home/aseps/Workspace",
+        "OLLAMA_URL": "http://localhost:11434"
+      }
+    },
+    "mcp-skills-server": {
+      "command": "/home/aseps/MCP/.venv/bin/python",
+      "args": ["-m", "servers.skills.server"],
+      "env": {
+        "MCP_ROOT": "/home/aseps/MCP",
+        "OLLAMA_URL": "http://localhost:11434"
+      }
+    },
+    "mcp-gmail-bridge": {
+      "command": "/home/aseps/MCP/.venv/bin/python",
+      "args": ["-m", "servers.bridge.gmail_server"],
+      "env": {
+        "MCP_ROOT": "/home/aseps/MCP"
+      }
+    },
+    "mcp-telegram-bridge": {
+      "command": "/home/aseps/MCP/.venv/bin/python",
+      "args": ["-m", "servers.bridge.telegram_server"],
+      "env": {
+        "MCP_ROOT": "/home/aseps/MCP"
+      }
+    },
+    "mcp-gemini-bridge": {
+      "command": "/home/aseps/MCP/.venv/bin/python",
+      "args": ["-m", "servers.bridge.gemini_server"],
+      "env": {
+        "MCP_ROOT": "/home/aseps/MCP"
+      }
+    },
+    "mcp-vision-bridge": {
+      "command": "/home/aseps/MCP/.venv/bin/python",
+      "args": ["-m", "servers.bridge.vision_server"],
+      "env": {
+        "MCP_ROOT": "/home/aseps/MCP"
+      }
     }
+  }
 }

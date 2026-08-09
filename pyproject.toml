@@ -30,6 +30,16 @@ dev = [
     "mypy>=1.11",
 ]
 
+[project.scripts]
+mcp-core-server = "servers.core.server:main"
+mcp-memory-server = "servers.memory.server:main"
+mcp-knowledge-server = "servers.knowledge.server:main"
+mcp-skills-server = "servers.skills.server:main"
+mcp-gmail-bridge = "servers.bridge.gmail_server:main"
+mcp-telegram-bridge = "servers.bridge.telegram_server:main"
+mcp-gemini-bridge = "servers.bridge.gemini_server:main"
+mcp-vision-bridge = "servers.bridge.vision_server:main"
+
 [tool.ruff]
 line-length = 100
 target-version = "py312"
