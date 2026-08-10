@@ -65,6 +65,15 @@ class Settings(BaseSettings):
     openai_api_key: str | None = None
     anthropic_api_key: str | None = None
 
+    # MikroTik RouterOS (REST API + SSH)
+    mikrotik_host: str | None = None
+    mikrotik_port: int = 443  # REST API port (www-ssl service on RouterOS v7)
+    mikrotik_scheme: str = "https"
+    mikrotik_user: str | None = None
+    mikrotik_password: str | None = None
+    mikrotik_tls_verify: bool = False  # self-signed certs are common on RouterOS
+    mikrotik_ssh_port: int = 22
+
     # SQLite memory & knowledge (local-first default)
     memory_db_path: Path = Path("/home/aseps/MCP/data/memory_v2.db")
     knowledge_db_path: Path = Path("/home/aseps/MCP/data/knowledge_v2.db")

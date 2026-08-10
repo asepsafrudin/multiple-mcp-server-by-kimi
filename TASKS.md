@@ -48,7 +48,9 @@ Daftar tugas & status implementasi `MCP Aseps`. Perbarui checklist ini seiring p
 - [x] telegram — send / get updates
 - [x] gemini — generate text
 - [x] vision — OCR (butuh service-account JSON)
+- [x] mikrotik — RouterOS management via REST API + SSH (`servers/bridge/mikrotik_server.py`)
 - [x] unit test gemini (`tests/servers/bridge/test_gemini.py`, httpx mock)
+- [x] unit test mikrotik (`tests/servers/bridge/test_mikrotik.py`, httpx + asyncssh mock)
 - [ ] unit test gmail / telegram / vision
 - [ ] verifikasi end-to-end dengan credential asli
 

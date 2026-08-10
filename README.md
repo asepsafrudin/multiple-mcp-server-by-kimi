@@ -8,7 +8,7 @@ Agnostik, modular MCP (Model Context Protocol) server suite untuk agent yang ber
 - **servers/memory** — long-term memory (LTM) dengan SQLite + sqlite-vec + FTS5 + Ollama embeddings.
 - **servers/knowledge** — workspace RAG: indexing file teks, chunking, hybrid semantic + keyword search.
 - **servers/skills** — procedural memory / skill registry dengan semantic recall.
-- **servers/bridge** — integrasi Gmail, Telegram, Gemini, Vision OCR (credential dari `.env`).
+- **servers/bridge** — integrasi Gmail, Telegram, Gemini, Vision, MikroTik RouterOS (credential dari `.env`).
 - **shared/** — konfigurasi terpusat, embedding client, Redis cache, model, logging, security.
 - **config/** — konfigurasi editor universal (`mcp_universal.json`, `claude_desktop_config.json`, `cline_mcp_settings.json`).
 - **scripts/** — `start-all.sh`, `stop-all.sh`, `backup.sh`.

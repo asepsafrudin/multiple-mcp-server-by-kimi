@@ -86,6 +86,16 @@
           "MCP_ROOT": "/home/aseps/MCP"
         }
       }
+    },
+    "mcp-mikrotik-bridge": {
+      "transport": {
+        "type": "stdio",
+        "command": "/home/aseps/MCP/.venv/bin/python",
+        "args": ["-m", "servers.bridge.mikrotik_server"],
+        "env": {
+          "MCP_ROOT": "/home/aseps/MCP"
+        }
+      }
     }
   }
 }

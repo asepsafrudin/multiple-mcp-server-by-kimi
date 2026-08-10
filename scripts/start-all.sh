@@ -28,6 +28,7 @@ SERVERS=(
     "telegram:servers.bridge.telegram_server:8005"
     "gemini:servers.bridge.gemini_server:8006"
     "vision:servers.bridge.vision_server:8007"
+    "mikrotik:servers.bridge.mikrotik_server:8008"
 )
 
 for entry in "${SERVERS[@]}"; do

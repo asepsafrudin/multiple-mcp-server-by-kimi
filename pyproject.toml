@@ -20,6 +20,7 @@ dependencies = [
     "google-api-python-client>=2.0",
     "openai>=1.0",
     "pyyaml>=6.0",
+    "asyncssh>=2.13",
 ]
 
 [project.optional-dependencies]
@@ -39,6 +40,7 @@ mcp-gmail-bridge = "servers.bridge.gmail_server:main"
 mcp-telegram-bridge = "servers.bridge.telegram_server:main"
 mcp-gemini-bridge = "servers.bridge.gemini_server:main"
 mcp-vision-bridge = "servers.bridge.vision_server:main"
+mcp-mikrotik-bridge = "servers.bridge.mikrotik_server:main"
 
 [tool.ruff]
 line-length = 100
