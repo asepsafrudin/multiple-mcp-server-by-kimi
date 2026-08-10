@@ -5,7 +5,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-VENV="$ROOT/.venv"
+VENV="/home/aseps/MCP/.venv"
 LOG_DIR="$ROOT/logs"
 PID_DIR="$LOG_DIR/pids"
 mkdir -p "$LOG_DIR" "$PID_DIR"
@@ -20,14 +20,14 @@ PYTHON="$VENV/bin/python"
 export MCP_ROOT="$ROOT"
 
 SERVERS=(
-    "core:servers.core.server:8000"
-    "memory:servers.memory.server:8001"
-    "knowledge:servers.knowledge.server:8002"
-    "skills:servers.skills.server:8003"
-    "gmail:servers.bridge.gmail_server:8004"
-    "telegram:servers.bridge.telegram_server:8005"
-    "gemini:servers.bridge.gemini_server:8006"
-    "vision:servers.bridge.vision_server:8007"
+    "core:servers.core.server:8100"
+    "memory:servers.memory.server:8101"
+    "knowledge:servers.knowledge.server:8102"
+    "skills:servers.skills.server:8103"
+    "gmail:servers.bridge.gmail_server:8104"
+    "telegram:servers.bridge.telegram_server:8105"
+    "gemini:servers.bridge.gemini_server:8106"
+    "vision:servers.bridge.vision_server:8107"
 )
 
 for entry in "${SERVERS[@]}"; do
