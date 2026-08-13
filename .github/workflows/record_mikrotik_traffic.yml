@@ -40,6 +40,16 @@ jobs:
             echo "MIKROTIK_SSH_PORT=${{ secrets.MIKROTIK_SSH_PORT || vars.MIKROTIK_SSH_PORT }}" >> .env
           fi
 
+      - name: Debug Connection to MikroTik
+        run: |
+          echo "=== DNS Resolution ==="
+          nslookup idn23.tunnel.id || true
+          ping -c 3 idn23.tunnel.id || true
+          echo "=== Port 3227 (API) ==="
+          curl -k -I --connect-timeout 5 https://idn23.tunnel.id:3227/rest/interface || true
+          echo "=== Port 3228 (SSH) ==="
+          nc -zv -w 5 idn23.tunnel.id 3228 || true
+
       - name: Record Traffic Statistics
         env:
           MIKROTIK_TLS_VERIFY: 'false'
