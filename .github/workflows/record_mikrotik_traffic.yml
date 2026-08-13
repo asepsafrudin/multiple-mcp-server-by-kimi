@@ -25,12 +25,12 @@ jobs:
 
       - name: Record Traffic Statistics
         env:
-          MIKROTIK_HOST: ${{ secrets.MIKROTIK_HOST }}
-          MIKROTIK_PORT: ${{ secrets.MIKROTIK_PORT }}
-          MIKROTIK_SCHEME: ${{ secrets.MIKROTIK_SCHEME }}
-          MIKROTIK_USER: ${{ secrets.MIKROTIK_USER }}
+          MIKROTIK_HOST: ${{ secrets.MIKROTIK_HOST || vars.MIKROTIK_HOST }}
+          MIKROTIK_PORT: ${{ secrets.MIKROTIK_PORT || vars.MIKROTIK_PORT }}
+          MIKROTIK_SCHEME: ${{ secrets.MIKROTIK_SCHEME || vars.MIKROTIK_SCHEME }}
+          MIKROTIK_USER: ${{ secrets.MIKROTIK_USER || vars.MIKROTIK_USER }}
           MIKROTIK_PASSWORD: ${{ secrets.MIKROTIK_PASSWORD }}
-          MIKROTIK_SSH_PORT: ${{ secrets.MIKROTIK_SSH_PORT }}
+          MIKROTIK_SSH_PORT: ${{ secrets.MIKROTIK_SSH_PORT || vars.MIKROTIK_SSH_PORT }}
           MIKROTIK_TLS_VERIFY: 'false'
         run: |
           mkdir -p logs

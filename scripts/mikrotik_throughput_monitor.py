@@ -27,12 +27,19 @@ def get_settings() -> dict[str, Any]:
     root = Path(__file__).resolve().parents[1]
     load_dotenv(root / ".env")
 
+    host = os.getenv("MIKROTIK_HOST") or "192.168.1.2"
+    port_str = os.getenv("MIKROTIK_PORT")
+    port = int(port_str) if port_str and port_str.strip() else 443
+    scheme = os.getenv("MIKROTIK_SCHEME") or "https"
+    user = os.getenv("MIKROTIK_USER") or "admin"
+    password = os.getenv("MIKROTIK_PASSWORD") or ""
+
     return {
-        "host": os.getenv("MIKROTIK_HOST", "192.168.1.2"),
-        "port": int(os.getenv("MIKROTIK_PORT", "443")),
-        "scheme": os.getenv("MIKROTIK_SCHEME", "https"),
-        "user": os.getenv("MIKROTIK_USER", "admin"),
-        "password": os.getenv("MIKROTIK_PASSWORD", ""),
+        "host": host,
+        "port": port,
+        "scheme": scheme,
+        "user": user,
+        "password": password,
         "tls_verify": os.getenv("MIKROTIK_TLS_VERIFY", "false").lower() == "true",
     }
 
