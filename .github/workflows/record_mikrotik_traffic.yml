@@ -25,20 +25,33 @@ jobs:
 
       - name: Create .env from Secret
         run: |
-          if [ -n "${{ secrets.MIKROTIK }}" ]; then
-            if [[ "${{ secrets.MIKROTIK }}" == *"="* ]]; then
-              echo "${{ secrets.MIKROTIK }}" > .env
-            else
-              echo "MIKROTIK_PASSWORD=${{ secrets.MIKROTIK }}" > .env
-            fi
-          else
-            echo "MIKROTIK_HOST=${{ secrets.MIKROTIK_HOST || vars.MIKROTIK_HOST }}" >> .env
-            echo "MIKROTIK_PORT=${{ secrets.MIKROTIK_PORT || vars.MIKROTIK_PORT }}" >> .env
-            echo "MIKROTIK_SCHEME=${{ secrets.MIKROTIK_SCHEME || vars.MIKROTIK_SCHEME }}" >> .env
-            echo "MIKROTIK_USER=${{ secrets.MIKROTIK_USER || vars.MIKROTIK_USER }}" >> .env
-            echo "MIKROTIK_PASSWORD=${{ secrets.MIKROTIK_PASSWORD }}" >> .env
-            echo "MIKROTIK_SSH_PORT=${{ secrets.MIKROTIK_SSH_PORT || vars.MIKROTIK_SSH_PORT }}" >> .env
-          fi
+          python -c "
+          import os
+          data = os.environ.get('SECRET_DATA', '')
+          if data:
+              with open('.env', 'w') as f:
+                  if '=' in data:
+                      f.write(data)
+                  else:
+                      f.write(f'MIKROTIK_PASSWORD={data}\n')
+          else:
+              # Create .env from individual secrets/variables if MIKROTIK is empty
+              with open('.env', 'w') as f:
+                  f.write(f'MIKROTIK_HOST={os.environ.get(\"MIKROTIK_HOST\", \"\")}\n')
+                  f.write(f'MIKROTIK_PORT={os.environ.get(\"MIKROTIK_PORT\", \"\")}\n')
+                  f.write(f'MIKROTIK_SCHEME={os.environ.get(\"MIKROTIK_SCHEME\", \"\")}\n')
+                  f.write(f'MIKROTIK_USER={os.environ.get(\"MIKROTIK_USER\", \"\")}\n')
+                  f.write(f'MIKROTIK_PASSWORD={os.environ.get(\"MIKROTIK_PASSWORD\", \"\")}\n')
+                  f.write(f'MIKROTIK_SSH_PORT={os.environ.get(\"MIKROTIK_SSH_PORT\", \"\")}\n')
+          "
+        env:
+          MIKROTIK_HOST: ${{ secrets.MIKROTIK_HOST || vars.MIKROTIK_HOST }}
+          MIKROTIK_PORT: ${{ secrets.MIKROTIK_PORT || vars.MIKROTIK_PORT }}
+          MIKROTIK_SCHEME: ${{ secrets.MIKROTIK_SCHEME || vars.MIKROTIK_SCHEME }}
+          MIKROTIK_USER: ${{ secrets.MIKROTIK_USER || vars.MIKROTIK_USER }}
+          MIKROTIK_PASSWORD: ${{ secrets.MIKROTIK_PASSWORD }}
+          MIKROTIK_SSH_PORT: ${{ secrets.MIKROTIK_SSH_PORT || vars.MIKROTIK_SSH_PORT }}
+          SECRET_DATA: ${{ secrets.MIKROTIK }}
 
       - name: Debug Connection to MikroTik
         run: |
