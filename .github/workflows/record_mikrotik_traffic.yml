@@ -2,8 +2,8 @@ name: Record MikroTik Traffic
 
 on:
   schedule:
-    # 11:00 UTC == 18:00 WIB (6 PM WIB)
-    - cron: '0 11 * * *'
+    # 11:00 UTC == 18:00 WIB (6 PM WIB) | Monday through Friday (5 days a week)
+    - cron: '0 11 * * 1-5'
   workflow_dispatch: # Allows manual triggering from GitHub interface
 
 jobs:
