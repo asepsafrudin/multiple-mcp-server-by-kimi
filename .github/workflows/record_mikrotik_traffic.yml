@@ -64,9 +64,12 @@ jobs:
                       line_str = line.strip()
                       if '=' in line_str:
                           parts = line_str.split('=', 1)
-                          print(f'Line {i}: Key={parts[0]}, ValueLength={len(parts[1])}')
+                          k = ''.join('X' if c.isalnum() else c for c in parts[0])
+                          v = ''.join('X' if c.isalnum() else c for c in parts[1])
+                          print(f'Line {i}: {k}={v}')
                       else:
-                          print(f'Line {i}: Not KEY=VALUE (Length={len(line_str)})')
+                          v = ''.join('X' if c.isalnum() else c for c in line_str)
+                          print(f'Line {i}: {v}')
           else:
               print('.env file does not exist!')
           "
