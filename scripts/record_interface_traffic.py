@@ -28,6 +28,12 @@ def main() -> int:
     args = parser.parse_args()
 
     settings = mtm.get_settings()
+    
+    # Debug: Print loaded settings (masking password)
+    masked_settings = settings.copy()
+    masked_settings["password"] = "***" if settings.get("password") else ""
+    print(f"Connection settings: {masked_settings}")
+    
     client = mtm.build_client(settings)
 
     out_dir = root / args.output_dir
