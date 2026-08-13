@@ -29,11 +29,31 @@ jobs:
           import os
           data = os.environ.get('SECRET_DATA', '')
           if data:
+              lines = data.strip().splitlines()
               with open('.env', 'w') as f:
-                  if '=' in data:
-                      f.write(data)
-                  else:
-                      f.write(f'MIKROTIK_PASSWORD={data}\n')
+                  for line in lines:
+                      line_str = line.strip()
+                      if not line_str:
+                          continue
+                      sep = None
+                      for s in ('->', '=', ':'):
+                          if s in line_str:
+                              sep = s
+                              break
+                      if sep:
+                          parts = line_str.split(sep, 1)
+                          k = parts[0].strip()
+                          v = parts[1].strip()
+                          # Normalize key and verify it looks like a variable key
+                          if k.replace('_', '').isalnum():
+                              f.write(f'{k.upper()}={v}\n')
+                          else:
+                              f.write(f'{line_str}\n')
+                      else:
+                          if len(lines) == 1:
+                              f.write(f'MIKROTIK_PASSWORD={line_str}\n')
+                          else:
+                              f.write(f'{line_str}\n')
           else:
               # Create .env from individual secrets/variables if MIKROTIK is empty
               with open('.env', 'w') as f:
