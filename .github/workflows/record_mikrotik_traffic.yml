@@ -26,17 +26,22 @@ jobs:
       - name: Create .env from Secret
         run: |
           if [ -n "${{ secrets.MIKROTIK }}" ]; then
-            echo "${{ secrets.MIKROTIK }}" > .env
+            if [[ "${{ secrets.MIKROTIK }}" == *"="* ]]; then
+              echo "${{ secrets.MIKROTIK }}" > .env
+            else
+              echo "MIKROTIK_PASSWORD=${{ secrets.MIKROTIK }}" > .env
+            fi
+          else
+            echo "MIKROTIK_HOST=${{ secrets.MIKROTIK_HOST || vars.MIKROTIK_HOST }}" >> .env
+            echo "MIKROTIK_PORT=${{ secrets.MIKROTIK_PORT || vars.MIKROTIK_PORT }}" >> .env
+            echo "MIKROTIK_SCHEME=${{ secrets.MIKROTIK_SCHEME || vars.MIKROTIK_SCHEME }}" >> .env
+            echo "MIKROTIK_USER=${{ secrets.MIKROTIK_USER || vars.MIKROTIK_USER }}" >> .env
+            echo "MIKROTIK_PASSWORD=${{ secrets.MIKROTIK_PASSWORD }}" >> .env
+            echo "MIKROTIK_SSH_PORT=${{ secrets.MIKROTIK_SSH_PORT || vars.MIKROTIK_SSH_PORT }}" >> .env
           fi
 
       - name: Record Traffic Statistics
         env:
-          MIKROTIK_HOST: ${{ secrets.MIKROTIK_HOST || vars.MIKROTIK_HOST }}
-          MIKROTIK_PORT: ${{ secrets.MIKROTIK_PORT || vars.MIKROTIK_PORT }}
-          MIKROTIK_SCHEME: ${{ secrets.MIKROTIK_SCHEME || vars.MIKROTIK_SCHEME }}
-          MIKROTIK_USER: ${{ secrets.MIKROTIK_USER || vars.MIKROTIK_USER }}
-          MIKROTIK_PASSWORD: ${{ secrets.MIKROTIK_PASSWORD }}
-          MIKROTIK_SSH_PORT: ${{ secrets.MIKROTIK_SSH_PORT || vars.MIKROTIK_SSH_PORT }}
           MIKROTIK_TLS_VERIFY: 'false'
         run: |
           mkdir -p logs
