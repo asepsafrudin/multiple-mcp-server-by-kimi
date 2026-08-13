@@ -53,6 +53,24 @@ jobs:
           MIKROTIK_SSH_PORT: ${{ secrets.MIKROTIK_SSH_PORT || vars.MIKROTIK_SSH_PORT }}
           SECRET_DATA: ${{ secrets.MIKROTIK }}
 
+      - name: Verify .env Structure
+        run: |
+          python -c "
+          import os
+          if os.path.exists('.env'):
+              print('=== .env Structure ===')
+              with open('.env') as f:
+                  for i, line in enumerate(f, 1):
+                      line_str = line.strip()
+                      if '=' in line_str:
+                          parts = line_str.split('=', 1)
+                          print(f'Line {i}: Key={parts[0]}, ValueLength={len(parts[1])}')
+                      else:
+                          print(f'Line {i}: Not KEY=VALUE (Length={len(line_str)})')
+          else:
+              print('.env file does not exist!')
+          "
+
       - name: Debug Connection to MikroTik
         run: |
           echo "=== DNS Resolution ==="
