@@ -30,6 +30,7 @@ Daftar tugas & status implementasi `MCP Aseps`. Perbarui checklist ini seiring p
 - [x] store / recall / search / update / quantize / delete / expiry / stats
 - [x] semantic search (`memory_vec`) + fallback FTS5
 - [x] unit test engine (`tests/servers/memory/test_engine.py`)
+- [x] hindsight agent memory (`hindsight_engine.py` & tools)
 
 ## servers/knowledge
 
@@ -80,3 +81,27 @@ Daftar tugas & status implementasi `MCP Aseps`. Perbarui checklist ini seiring p
 - [ ] Migrasi PostgreSQL + pgvector
 - [ ] Hardening transport ws
 - [ ] Multi-user / multi-workspace
+## servers/orchestrator (MAF)
+
+- [x] Setup module & dependencies (`agent-framework`, `mcp`)
+- [x] Implementasi Orchestrator Agent dual mode (stdio server + SSE client)
+- [x] Config client editor (`config/mcp_orchestrator.json`)
+
+## servers/decision (SemIf / JEV-CPU)
+- [x] Node MCP Server `servers/decision/server.py`
+- [x] Routing & Triaging Logic Placeholder
+- [x] Eksposur di port 8080 (Integrasi MAF Orchestrator)
+
+## OMP Integration (Lapisan Runtime)
+- [x] Setup OMP config mapping ke backend MCP (`.omp/mcp.json`)
+- [x] Eksekutor skrip Terminal OMP (`scripts/start-omp.sh`)
+
+## Alternatif OMP / Pengganti Lapisan Eksekusi
+- [x] Riset kandidat pengganti berlisensi MIT 2025/2026 (OpenCode, OpenHands, dll).
+- [x] Transisi ke Hugging Face smolagents dan e2b sandbox (Task 06)
+
+## servers/document (Vision & OCR)
+- [x] Inisialisasi modul & dependencies (PyMuPDF / pdfplumber)
+- [x] Implementasi `document_server.py` dan alat render visual (`document_view_page`)
+- [x] Modifikasi `harvester.py` agar mengalokasi parsing PDF ke Baidu OCR / Vision server
+- [x] Eksekutor server OCR & visual viewer terdaftar di `start-all.sh`

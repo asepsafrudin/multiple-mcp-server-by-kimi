@@ -21,6 +21,10 @@ dependencies = [
     "openai>=1.0",
     "pyyaml>=6.0",
     "asyncssh>=2.13",
+    "agent-framework>=1.0.0",
+    "mcp>=1.3.0",
+    "smolagents>=1.0.0",
+    "pymupdf>=1.24",
 ]
 
 [project.optional-dependencies]
@@ -41,6 +45,9 @@ mcp-telegram-bridge = "servers.bridge.telegram_server:main"
 mcp-gemini-bridge = "servers.bridge.gemini_server:main"
 mcp-vision-bridge = "servers.bridge.vision_server:main"
 mcp-mikrotik-bridge = "servers.bridge.mikrotik_server:main"
+mcp-orchestrator = "servers.orchestrator.main:main"
+mcp-decision-server = "servers.decision.server:main"
+mcp-document-server = "servers.document.server:main"
 
 [tool.ruff]
 line-length = 100

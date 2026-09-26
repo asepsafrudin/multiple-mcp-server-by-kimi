@@ -71,3 +71,5 @@ router_log.*
 *.pem
 *.key
 *.cert
+
+output/

@@ -8,25 +8,31 @@
 4. **Credential terpisah** — tidak ada secret hardcoded; semua credential berasal dari `.env` atau `config/credentials/`.
 5. **Modular** — setiap server bisa dijalankan/di-disable secara independen.
 
-## Diagram Komponen
+## Arsitektur Sistem 5-Lapis
+
+Sistem ini berevolusi menggunakan penggabungan **Microsoft Agent Framework (MAF)**, **Oh My Pi (OMP)**, **SemIf (JEV-CPU)**, **Hindsight Memory**, dan **MCP Suite**.
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                         Agnostic Agent                       │
-│              (Claude Desktop / Cline / Cursor)               │
-└──────────────┬──────────────────────────────────────────────┘
-               │ stdio / SSE
-┌──────────────▼──────────────────────────────────────────────┐
-│                       MCP Servers                            │
-│  core  │  memory  │  knowledge  │  skills  │  bridge        │
-└────┬───┴────┬─────┴──────┬──────┴────┬─────┴────┬───────────┘
-     │        │            │           │          │
-     ▼        ▼            ▼           ▼          ▼
-  allowed   SQLite      SQLite      SQLite     Gmail
-  dirs      sqlite-vec  sqlite-vec  sqlite-vec Telegram
-  shell     FTS5        FTS5        FTS5       Gemini
-  web       Ollama      Ollama      Ollama     Vision
-            Redis       Redis       Redis
+┌────────────────────────────────────────────────────────┐
+│ LAPISAN 1: ORKESTRASI (MAF Orchestrator Agent)         │
+│ Mengatur graph workflow (Concurrent/Handoff)           │
+└───────────────────┬────────────────────────────────────┘
+                    ▼
+┌───────────────────┴────────────────────────────────────┐
+│ LAPISAN 2: KEPUTUSAN (SemIf / JEV-CPU)                 │
+│ Routing task, triage, pre-check via Qwen3-0.6B (CPU)   │
+└───────────────────┬────────────────────────────────────┘
+                    ▼
+┌───────────────────┴────────────────────────────────────┐
+│ LAPISAN 3: RUNTIME (OMP) & LAPISAN 4: MEMORI           │
+│ OMP: Coding Subagent (ACP/SDK)                         │
+│ Hindsight: Memori jangka panjang (retain, reflect)     │
+└───────────────────┬────────────────────────────────────┘
+                    ▼
+┌───────────────────┴────────────────────────────────────┐
+│ LAPISAN 5: PENYEDIA TOOL (MCP Suite)                   │
+│ (Core, Knowledge, Skills, Bridge MikroTik/Telegram)    │
+└────────────────────────────────────────────────────────┘
 ```
 
 ## Shared Library

@@ -4,7 +4,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-PID_DIR="$ROOT/logs/pids"
+PID_DIR="$ROOT/output/logs/pids"
 
 if [[ ! -d "$PID_DIR" ]]; then
     echo "No PID directory found; nothing to stop."

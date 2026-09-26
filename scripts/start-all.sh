@@ -6,7 +6,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 VENV="$ROOT/.venv"
-LOG_DIR="$ROOT/logs"
+LOG_DIR="$ROOT/output/logs"
 PID_DIR="$LOG_DIR/pids"
 mkdir -p "$LOG_DIR" "$PID_DIR"
 
@@ -29,6 +29,8 @@ SERVERS=(
     "gemini:servers.bridge.gemini_server:8006"
     "vision:servers.bridge.vision_server:8007"
     "mikrotik:servers.bridge.mikrotik_server:8008"
+    "decision:servers.decision.server:8080"
+    "document:servers.document.server:8009"
 )
 
 for entry in "${SERVERS[@]}"; do

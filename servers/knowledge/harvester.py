@@ -60,6 +60,7 @@ TEXT_EXTENSIONS = {
     ".svg",
     ".graphql",
     ".prisma",
+    ".pdf",
 }
 
 IGNORED_DIRS = {
@@ -131,6 +132,20 @@ def _file_type(path: Path) -> str:
 
 def _read_text(path: Path, max_bytes: int = 2 * 1024 * 1024) -> str | None:
     try:
+        # Route PDF processing to Document Server (Baidu OCR / PyMuPDF placeholder)
+        if path.suffix.lower() == ".pdf":
+            try:
+                from servers.document.server import document_extract_text
+                logger.info("routing_pdf_to_document_server", path=str(path))
+                result = document_extract_text(str(path))
+                if result.get("status") == "ok":
+                    return result.get("text")
+                logger.warning("pdf_extraction_failed", error=result.get("error"))
+                return None
+            except ImportError:
+                logger.warning("document_server_not_found_for_pdf")
+                return None
+
         raw = path.read_bytes()
         if len(raw) > max_bytes:
             logger.warning("file_too_large", path=str(path), size=len(raw))
