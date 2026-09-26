@@ -4,14 +4,17 @@ Agnostik, modular MCP (Model Context Protocol) server suite untuk agent yang ber
 
 ## Fitur Utama
 
-- **servers/core** — filesystem, shell, system, web, dan security tools.
-- **servers/memory** — long-term memory (LTM) dengan SQLite + sqlite-vec + FTS5 + Ollama embeddings.
+- **servers/orchestrator** — MAF (Master Agentic Framework) Orchestrator untuk routing dan manajemen eksekusi agent.
+- **servers/decision** — SemIf (JEV-CPU) Decision Layer untuk triage, risk assessment, dan decision routing.
+- **servers/core** — filesystem, shell, system, web, dan security tools (OMP Runtime).
+- **servers/memory** — long-term memory (LTM) & **Hindsight Engine** dengan SQLite + sqlite-vec + FTS5 + Ollama embeddings.
 - **servers/knowledge** — workspace RAG: indexing file teks, chunking, hybrid semantic + keyword search.
+- **servers/document** — Document extraction, OCR vision text rendering, dan PDF processing.
 - **servers/skills** — procedural memory / skill registry dengan semantic recall.
-- **servers/bridge** — integrasi Gmail, Telegram, Gemini, Vision, MikroTik RouterOS (credential dari `.env`).
+- **servers/bridge** — integrasi sistem eksternal: Gmail, Telegram, Gemini, Vision, MikroTik RouterOS (credential dari `.env`).
 - **shared/** — konfigurasi terpusat, embedding client, Redis cache, model, logging, security.
 - **config/** — konfigurasi editor universal (`mcp_universal.json`, `claude_desktop_config.json`, `cline_mcp_settings.json`).
-- **scripts/** — `start-all.sh`, `stop-all.sh`, `backup.sh`.
+- **scripts/** — `start-all.sh`, `stop-all.sh`, `backup.sh`, `start-omp.sh`, `setup-vscode.sh`.
 
 ## Prasyarat
 
@@ -56,14 +59,19 @@ Salin konfigurasi yang sesuai ke editor Anda.
 ├── config/              # konfigurasi editor & universal
 ├── data/                # SQLite databases (memory_v2.db, knowledge_v2.db, skills_v2.db)
 ├── servers/
+│   ├── orchestrator/    # MAF Orchestrator (Tugas / Routing)
+│   ├── decision/        # SemIf (JEV-CPU) Decision layer
 │   ├── core/
-│   ├── memory/
+│   ├── memory/          # Memory (LTM) & Hindsight Engine
 │   ├── knowledge/
+│   ├── document/        # Document & PDF OCR extraction
 │   ├── skills/
 │   └── bridge/
 ├── shared/              # library bersama
-├── scripts/             # start-all, stop-all, backup
+├── scripts/             # start-all, stop-all, backup, OMP & vscode scripts
+├── tasks/               # daftar tugas dan progress implementasi
 ├── tests/               # pytest suite
+├── workspace/           # symlink bekerja (sandboxing environment)
 ├── docker-compose.yml
 ├── Makefile
 ├── pyproject.toml
