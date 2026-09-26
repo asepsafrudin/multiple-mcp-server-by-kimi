@@ -87,6 +87,7 @@ class Settings(BaseSettings):
     # SQLite memory & knowledge (local-first default)
     memory_db_path: Path = Path("/home/aseps/MCP/data/memory_v2.db")
     knowledge_db_path: Path = Path("/home/aseps/MCP/data/knowledge_v2.db")
+    hindsight_db_path: Path = Path("/home/aseps/MCP/data/hindsight.db")
 
     # Workspace knowledge
     workspace_root: Path = Path("/home/aseps/Workspace")

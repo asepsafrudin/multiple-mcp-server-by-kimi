@@ -91,3 +91,25 @@ class Skill(BaseModel):
     examples: list[str] = Field(default_factory=list)
     version: int = 1
     embedding: list[float] | None = None
+
+
+class HindsightExperience(BaseModel):
+    """A record of an agent's past action and its outcome."""
+
+    id: str = Field(default_factory=lambda: "")
+    task_description: str
+    action_taken: str
+    outcome: str
+    success: bool
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+
+
+class HindsightLearning(BaseModel):
+    """A lesson learned derived from reflecting on a HindsightExperience."""
+
+    id: str = Field(default_factory=lambda: "")
+    experience_id: str
+    lesson: str
+    advice_for_future: str
+    embedding: list[float] | None = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))

@@ -1,4 +1,4 @@
-.PHONY: install dev test lint format clean start stop backup docs
+.PHONY: install dev test lint format clean sweep start stop backup docs
 
 ROOT := $(shell pwd)
 VENV := $(ROOT)/.venv
@@ -29,6 +29,13 @@ clean:
 	find . -type d -name .mypy_cache -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name .pytest_cache -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name .ruff_cache -exec rm -rf {} + 2>/dev/null || true
+
+sweep:
+	@echo "Menyapu Sandbox: Menghapus script eksperimen (lebih dari 7 hari) di operasional/sandbox/..."
+	find $(ROOT)/operasional/sandbox/ -type f -mtime +7 -exec rm -f {} + 2>/dev/null || true
+	@echo "Menyapu Logs: Menghapus log (lebih dari 30 hari) di output/logs/..."
+	find $(ROOT)/output/logs/ -type f -name "*.log" -mtime +30 -exec rm -f {} + 2>/dev/null || true
+	@echo "Pemeliharaan rutin struktur MCP selesai!"
 
 start:
 	bash $(ROOT)/scripts/start-all.sh

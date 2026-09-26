@@ -14,6 +14,7 @@ from datetime import UTC
 from fastmcp import FastMCP
 
 from servers.memory import engine
+from servers.memory import hindsight_engine
 from shared.logging import configure_logging
 from shared.models import MemoryEntry
 
@@ -164,6 +165,38 @@ async def memory_stats(namespace: str | None = None) -> dict:
     stats = await engine.get_stats(namespace)
     stats["cleaned_expired"] = cleaned
     return stats
+
+
+@mcp.tool()
+async def hindsight_store_experience(task_description: str, action_taken: str, outcome: str, success: bool) -> dict:
+    """Store an agent's experience after attempting a task. Useful for learning what works and what doesn't."""
+    exp = await hindsight_engine.store_experience(task_description, action_taken, outcome, success)
+    return {"status": "stored", "experience_id": exp.id}
+
+
+@mcp.tool()
+async def hindsight_reflect_and_learn(experience_id: str, lesson: str, advice_for_future: str) -> dict:
+    """Derive learning from a past experience and save it as advice for similar future tasks."""
+    try:
+        learning = await hindsight_engine.reflect_and_learn(experience_id, lesson, advice_for_future)
+        return {"status": "learned", "learning_id": learning.id}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
+@mcp.tool()
+async def hindsight_search_advice(current_task: str, limit: int = 3) -> list[dict]:
+    """Retrieve relevant past advice and learnings when facing a new task."""
+    learnings = await hindsight_engine.search_advice(current_task, limit)
+    return [
+        {
+            "id": l.id,
+            "lesson": l.lesson,
+            "advice": l.advice_for_future,
+            "experience_id": l.experience_id
+        }
+        for l in learnings
+    ]
 
 
 if __name__ == "__main__":

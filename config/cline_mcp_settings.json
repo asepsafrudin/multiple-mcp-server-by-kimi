@@ -1,101 +1,39 @@
 {
   "mcpServers": {
-    "mcp-core-server": {
-      "transport": {
-        "type": "stdio",
-        "command": "/home/aseps/MCP/.venv/bin/python",
-        "args": ["-m", "servers.core.server"],
-        "env": {
-          "MCP_ROOT": "/home/aseps/MCP",
-          "LOG_LEVEL": "INFO"
-        }
-      }
+    "aseps-core": {
+      "command": "/home/aseps/MCP/.venv/bin/mcp-core-server",
+      "args": [],
+      "env": { "MCP_ROOT": "/home/aseps/MCP" }
     },
-    "mcp-memory-server": {
-      "transport": {
-        "type": "stdio",
-        "command": "/home/aseps/MCP/.venv/bin/python",
-        "args": ["-m", "servers.memory.server"],
-        "env": {
-          "MCP_ROOT": "/home/aseps/MCP",
-          "MEMORY_DB_PATH": "/home/aseps/MCP/data/memory_v2.db",
-          "OLLAMA_URL": "http://localhost:11434"
-        }
-      }
+    "aseps-memory": {
+      "command": "/home/aseps/MCP/.venv/bin/mcp-memory-server",
+      "args": [],
+      "env": { "MCP_ROOT": "/home/aseps/MCP" }
     },
-    "mcp-knowledge-server": {
-      "transport": {
-        "type": "stdio",
-        "command": "/home/aseps/MCP/.venv/bin/python",
-        "args": ["-m", "servers.knowledge.server"],
-        "env": {
-          "MCP_ROOT": "/home/aseps/MCP",
-          "KNOWLEDGE_DB_PATH": "/home/aseps/MCP/data/knowledge_v2.db",
-          "WORKSPACE_ROOT": "/home/aseps/Workspace",
-          "OLLAMA_URL": "http://localhost:11434"
-        }
-      }
+    "aseps-knowledge": {
+      "command": "/home/aseps/MCP/.venv/bin/mcp-knowledge-server",
+      "args": [],
+      "env": { "MCP_ROOT": "/home/aseps/MCP" }
     },
-    "mcp-skills-server": {
-      "transport": {
-        "type": "stdio",
-        "command": "/home/aseps/MCP/.venv/bin/python",
-        "args": ["-m", "servers.skills.server"],
-        "env": {
-          "MCP_ROOT": "/home/aseps/MCP",
-          "OLLAMA_URL": "http://localhost:11434"
-        }
-      }
+    "aseps-skills": {
+      "command": "/home/aseps/MCP/.venv/bin/mcp-skills-server",
+      "args": [],
+      "env": { "MCP_ROOT": "/home/aseps/MCP" }
     },
-    "mcp-gmail-bridge": {
-      "transport": {
-        "type": "stdio",
-        "command": "/home/aseps/MCP/.venv/bin/python",
-        "args": ["-m", "servers.bridge.gmail_server"],
-        "env": {
-          "MCP_ROOT": "/home/aseps/MCP"
-        }
-      }
+    "aseps-decision": {
+      "command": "/home/aseps/MCP/.venv/bin/mcp-decision-server",
+      "args": [],
+      "env": { "MCP_ROOT": "/home/aseps/MCP" }
     },
-    "mcp-telegram-bridge": {
-      "transport": {
-        "type": "stdio",
-        "command": "/home/aseps/MCP/.venv/bin/python",
-        "args": ["-m", "servers.bridge.telegram_server"],
-        "env": {
-          "MCP_ROOT": "/home/aseps/MCP"
-        }
-      }
+    "aseps-orchestrator": {
+      "command": "/home/aseps/MCP/.venv/bin/mcp-orchestrator",
+      "args": [],
+      "env": { "MCP_ROOT": "/home/aseps/MCP" }
     },
-    "mcp-gemini-bridge": {
-      "transport": {
-        "type": "stdio",
-        "command": "/home/aseps/MCP/.venv/bin/python",
-        "args": ["-m", "servers.bridge.gemini_server"],
-        "env": {
-          "MCP_ROOT": "/home/aseps/MCP"
-        }
-      }
-    },
-    "mcp-vision-bridge": {
-      "transport": {
-        "type": "stdio",
-        "command": "/home/aseps/MCP/.venv/bin/python",
-        "args": ["-m", "servers.bridge.vision_server"],
-        "env": {
-          "MCP_ROOT": "/home/aseps/MCP"
-        }
-      }
-    },
-    "mcp-mikrotik-bridge": {
-      "transport": {
-        "type": "stdio",
-        "command": "/home/aseps/MCP/.venv/bin/python",
-        "args": ["-m", "servers.bridge.mikrotik_server"],
-        "env": {
-          "MCP_ROOT": "/home/aseps/MCP"
-        }
-      }
+    "bridge-mikrotik": {
+      "command": "/home/aseps/MCP/.venv/bin/mcp-mikrotik-bridge",
+      "args": [],
+      "env": { "MCP_ROOT": "/home/aseps/MCP" }
     }
   }
 }

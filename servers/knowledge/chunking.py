@@ -82,13 +82,84 @@ def chunk_text(
     return _split_by_size(parts, max_tokens, overlap_tokens)
 
 
+def _python_ast_outline(text: str) -> str | None:
+    """Generate a high-level AST outline (classes/functions) enriched with graph dependencies."""
+    import ast
+    try:
+        tree = ast.parse(text)
+    except Exception:
+        return None
+        
+    class DependencyExtractor(ast.NodeVisitor):
+        def __init__(self):
+            self.deps = set()
+        def visit_Call(self, node):
+            if isinstance(node.func, ast.Name):
+                self.deps.add(node.func.id)
+            elif isinstance(node.func, ast.Attribute):
+                if isinstance(node.func.value, ast.Name):
+                    self.deps.add(f"{node.func.value.id}.{node.func.attr}")
+                else:
+                    self.deps.add(node.func.attr)
+            self.generic_visit(node)
+
+    outline = ["# [METADATA: PYTHON FILE OUTLINE & SYMBOLS]"]
+    found_symbols = False
+    
+    for node in ast.iter_child_nodes(tree):
+        if isinstance(node, ast.ClassDef):
+            found_symbols = True
+            bases = [ast.unparse(b) for b in node.bases] if hasattr(ast, 'unparse') else []
+            base_str = f"({', '.join(bases)})" if bases else ""
+            
+            methods = [n.name for n in node.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))]
+            extractor = DependencyExtractor()
+            extractor.visit(node)
+            deps = ", ".join(sorted(extractor.deps)[:10]) # Limit to 10 for token brevity
+            
+            outline.append(f"class {node.name}{base_str}:")
+            if methods:
+                outline.append(f"    # Methods: {', '.join(methods)}")
+            if deps:
+                outline.append(f"    # Dependencies: {deps}")
+            outline.append("    ...")
+            
+        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            found_symbols = True
+            extractor = DependencyExtractor()
+            extractor.visit(node)
+            deps = ", ".join(sorted(extractor.deps)[:10])
+            
+            args = ast.unparse(node.args) if hasattr(ast, 'unparse') else "..."
+            outline.append(f"def {node.name}({args}):")
+            if deps:
+                outline.append(f"    # Dependencies: {deps}")
+            outline.append("    ...")
+            
+    if found_symbols:
+        return "\n".join(outline)
+    return None
+
+
 def chunk_file(path: Path, text: str) -> list[str]:
-    """Chunk a file's text with format-aware defaults."""
+    """Chunk a file's text with format-aware defaults and AST outlines."""
     suffix = path.suffix.lower()
+    chunks = []
+    
     if suffix in {".md", ".markdown"}:
         # Markdown: keep sections together if small enough.
-        return chunk_text(text, max_tokens=400, overlap_tokens=40)
-    if suffix in {".py", ".js", ".ts", ".java", ".go", ".rs", ".c", ".cpp", ".h"}:
-        # Code: prefer function/class boundaries, but chunk_text does not parse AST.
-        return chunk_text(text, max_tokens=300, overlap_tokens=30)
-    return chunk_text(text, max_tokens=500, overlap_tokens=50)
+        chunks.extend(chunk_text(text, max_tokens=400, overlap_tokens=40))
+    elif suffix == ".py":
+        # Python Code: Generate AST Outline for 5% token efficiency on symbol searches
+        outline = _python_ast_outline(text)
+        if outline:
+            chunks.append(outline)
+        # Fallback to standard chunking for the detail body 
+        chunks.extend(chunk_text(text, max_tokens=300, overlap_tokens=30))
+    elif suffix in {".js", ".ts", ".java", ".go", ".rs", ".c", ".cpp", ".h"}:
+        # Other Code: Currently falls back to standard text chunking
+        chunks.extend(chunk_text(text, max_tokens=300, overlap_tokens=30))
+    else:
+        chunks.extend(chunk_text(text, max_tokens=500, overlap_tokens=50))
+        
+    return chunks
