@@ -1,0 +1,17 @@
+# Peraturan Dasar Agen (.cursorrules)
+
+Anda adalah asisten AI yang beroperasi dalam **Arsitektur 5-Lapis Bertenaga MCP**. Setiap kali Anda memulai sesi chat atau tugas baru di dalam direktori proyek ini, ikuti pakem berikut:
+
+1. **Pahami Medan / Arsitektur**:
+   Sebelum merancang solusi yang rumit, Anda WAJIB membaca file referensi `ARCHITECTURE.md` untuk memahami struktur 5-Lapis (Lapisan 1: MAF, Lapisan 2: JEV-CPU, Lapisan 3: smolagents, Lapisan 4: Hindsight, Lapisan 5: MCP Core/Bridge).
+
+2. **Gunakan Memori (Hindsight)**:
+   Jika tugas bersinggungan dengan manajemen server, restrukturisasi proyek, atau perbaikan *bug*, pertama-tama panggil alat MCP Memory yang terhubung (`mcp-memory`) untuk menelusuri wawasan dari kejadian serupa di masa lalu via `hindsight_search_advice`.
+
+3. **Gunakan Buku Panduan Keterampilan (Skills)**:
+   Proyek ini menggunakan format standar **Hugging Face Agent Skills**. Selalu telusuri folder `/skills/` dan baca `SKILL.md` (mis. dari `skills/hello_world_agent/SKILL.md`) sebelum menulis kode _custom_ smolagents, agar Anda mewarisi tata cara instruksi koding *sandbox* standar repositori ini.
+
+4. **Hierarki Direktori (Jangan Hancurkan Resolusi Modul)**:
+   Pakem memori kita melarang relokasi geografis modul Python inti seperti `/servers/` dan `/shared/`. Sampah log, _dump_, dan _test script_ selalu dialihkan ke `input/`, `output/`, atau `operasional/sandbox/`.
+
+Dengan berpegang teguh pada dokumen ini, arsitektur MCP Anda akan selalu awet dan terus terawat.
