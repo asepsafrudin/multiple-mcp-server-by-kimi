@@ -73,3 +73,6 @@ router_log.*
 *.cert
 
 output/
+
+# Working Sandbox
+operasional/
