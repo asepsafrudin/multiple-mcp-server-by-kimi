@@ -74,6 +74,16 @@ class Settings(BaseSettings):
     mikrotik_tls_verify: bool = False  # self-signed certs are common on RouterOS
     mikrotik_ssh_port: int = 22
 
+    # MikroTik RouterOS 2 (REST API + SSH)
+    mikrotik2_host: str | None = None
+    mikrotik2_port: int = 443
+    mikrotik2_scheme: str = "https"
+    mikrotik2_user: str | None = None
+    mikrotik2_password: str | None = None
+    mikrotik2_tls_verify: bool = False
+    mikrotik2_ssh_port: int = 22
+
+
     # SQLite memory & knowledge (local-first default)
     memory_db_path: Path = Path("/home/aseps/MCP/data/memory_v2.db")
     knowledge_db_path: Path = Path("/home/aseps/MCP/data/knowledge_v2.db")

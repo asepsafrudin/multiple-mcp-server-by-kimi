@@ -56,3 +56,18 @@ Thumbs.db
 *.tmp
 *.swp
 *~
+
+# Data outputs and hardcoded API responses
+*.json
+*.txt
+reports/
+final_result.*
+out_sql.*
+router_log.*
+
+# Hardcoded credentials
+*credential*
+*secret*
+*.pem
+*.key
+*.cert
