@@ -28,10 +28,14 @@ class FullstackAgenticWorkflow:
     Protects against Context Bloat, infinite loops, and RAG Poisoning.
     """
     
-    def __init__(self):
-        # We will inject the SemIf (Decision) validator here,
-        # and the MCP suite clients for actual execution.
-        pass
+    def __init__(self, ui_mode: bool = False):
+        self.ui_mode = ui_mode
+        self.hitl_event = None
+        self.hitl_decision = None
+        self.hitl_feedback = None
+        if self.ui_mode:
+            import asyncio
+            self.hitl_event = asyncio.Event()
 
     async def run_architect_phase(self, state: WorkflowState) -> WorkflowState:
         logger.info("Executing Architect Phase (RAG Retrieval & Planning)")
@@ -88,22 +92,31 @@ class FullstackAgenticWorkflow:
 
     async def run_hitl_approval_phase(self, state: WorkflowState) -> WorkflowState:
         logger.info("Executing HITL Approval Phase (Human-in-the-loop Gate)")
-        print("\n" + "="*50)
-        print("🚨 HUMAN-IN-THE-LOOP APPROVAL GATE 🚨")
-        print(f"Task: {state.task_description}")
-        print("Summary of actions:")
-        for summary in state.context_summaries:
-            print(f" - {summary}")
-        print("="*50)
         
-        user_input = input("Proceed with applying these changes? (y/n/steer): ").strip().lower()
+        if self.ui_mode:
+            logger.info("Waiting for UI HITL Approval (Paused)...")
+            self.hitl_event.clear()
+            await self.hitl_event.wait()
+            user_input = self.hitl_decision
+            feedback = self.hitl_feedback
+        else:
+            print("\n" + "="*50)
+            print("🚨 HUMAN-IN-THE-LOOP APPROVAL GATE 🚨")
+            print(f"Task: {state.task_description}")
+            print("Summary of actions:")
+            for summary in state.context_summaries:
+                print(f" - {summary}")
+            print("="*50)
+            user_input = input("Proceed with applying these changes? (y/n/steer): ").strip().lower()
+            feedback = None
         
-        if user_input == 'y' or user_input == 'yes':
+        if user_input in ['y', 'yes', 'approve']:
             logger.info("Human approved the changes.")
             state.hitl_approved = True
             state.current_phase = "DONE"
         elif user_input == 'steer':
-            feedback = input("Provide steering feedback: ")
+            if not feedback:
+                feedback = input("Provide steering feedback: ")
             logger.info(f"Human provided feedback: {feedback}")
             state.recent_errors.append(f"Human Feedback: {feedback}")
             state.qa_retry_count = 0  # reset retries
@@ -114,6 +127,14 @@ class FullstackAgenticWorkflow:
             state.current_phase = "DONE"
             
         return state
+
+    # Hooks for broadcasting
+    async def _broadcast_state(self, state: WorkflowState):
+        if not self.ui_mode:
+            return
+        # A simple hook to let FastAPI know the state has updated
+        # In actual prod, we might push to redis pubsub
+        self.latest_state = state
 
     async def execute(self, task_description: str):
         state = WorkflowState(task_description=task_description)
@@ -146,6 +167,7 @@ class FullstackAgenticWorkflow:
                 phase_duration = time.time() - phase_start
                 state.phase_metrics[current_p] = state.phase_metrics.get(current_p, 0.0) + phase_duration
                 logger.info(f"Phase {current_p} execution took {phase_duration:.2f}s")
+                await self._broadcast_state(state)
         finally:
             # Hancurkan sandbox setelah tugas selesai (mencegah memory leak / dangling container)
             await sandbox.stop()

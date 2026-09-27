@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agentic Workflow Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-900 text-white font-sans h-screen flex flex-col items-center">
+
+    <header class="w-full bg-gray-800 p-4 border-b border-gray-700 flex justify-between items-center">
+        <h1 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
+            Agentic IDE Dashboard</h1>
+        <div id="statusBadge" class="px-3 py-1 rounded-full bg-gray-700 text-sm font-semibold">IDLE</div>
+    </header>
+
+    <main class="flex-1 w-full max-w-5xl p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+
+        <!-- Left Panel: Graph Viz -->
+        <section class="col-span-2 space-y-6">
+            <div class="bg-gray-800 p-6 rounded-xl border border-gray-700">
+                <h2 class="text-xl font-bold mb-4">Workflow Execution</h2>
+
+                <div class="flex items-center justify-between mb-8 overflow-x-auto px-4">
+                    <div id="node-ARCHITECT" class="node flex flex-col items-center opacity-50">
+                        <div
+                            class="w-12 h-12 rounded-full bg-gray-600 flex items-center justify-center font-bold mb-2 transition-all">
+                            1</div>
+                        <span class="text-sm">Architect</span>
+                    </div>
+                    <div class="h-1 flex-1 bg-gray-700 mx-2"></div>
+
+                    <div id="node-BACKEND" class="node flex flex-col items-center opacity-50">
+                        <div
+                            class="w-12 h-12 rounded-full bg-gray-600 flex items-center justify-center font-bold mb-2 transition-all">
+                            2</div>
+                        <span class="text-sm">Backend</span>
+                    </div>
+                    <div class="h-1 flex-1 bg-gray-700 mx-2"></div>
+
+                    <div id="node-FRONTEND" class="node flex flex-col items-center opacity-50">
+                        <div
+                            class="w-12 h-12 rounded-full bg-gray-600 flex items-center justify-center font-bold mb-2 transition-all">
+                            3</div>
+                        <span class="text-sm">Frontend</span>
+                    </div>
+                    <div class="h-1 flex-1 bg-gray-700 mx-2"></div>
+
+                    <div id="node-QA" class="node flex flex-col items-center opacity-50">
+                        <div
+                            class="w-12 h-12 rounded-full bg-gray-600 flex items-center justify-center font-bold mb-2 transition-all">
+                            4</div>
+                        <span class="text-sm">QA Test</span>
+                    </div>
+                </div>
+
+                <!-- Action Runner -->
+                <div id="startPanel" class="flex flex-col space-y-3">
+                    <input type="text" id="taskInput" placeholder="Enter instructions (e.g. Build an API for...)"
+                        class="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:outline-none focus:border-blue-500">
+                    <button onclick="startWorkflow()"
+                        class="bg-blue-600 hover:bg-blue-500 font-bold py-2 px-4 rounded-lg transition-colors">Start
+                        Agents</button>
+                </div>
+            </div>
+
+            <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 h-64 overflow-y-auto">
+                <h2 class="text-xl font-bold mb-4">Summary Logs</h2>
+                <ul id="logList" class="space-y-2 text-sm text-gray-300 font-mono">
+                </ul>
+            </div>
+        </section>
+
+        <!-- Right Panel: Telemetry & HITL -->
+        <section class="space-y-6">
+            <div class="bg-gray-800 p-6 rounded-xl border border-gray-700">
+                <h2 class="text-xl font-bold mb-4">Observability</h2>
+                <div class="space-y-4">
+                    <div>
+                        <span class="block text-xs uppercase text-gray-400">Execution Time</span>
+                        <span id="tel-time" class="text-2xl font-bold">0.00s</span>
+                    </div>
+                    <div>
+                        <span class="block text-xs uppercase text-gray-400">Total Tokens</span>
+                        <span id="tel-tokens" class="text-2xl font-bold">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- HITL Modal (Inline) -->
+            <div id="hitlPanel" class="hidden bg-yellow-900/40 p-6 rounded-xl border border-yellow-600">
+                <h2 class="text-xl font-bold mb-2 text-yellow-500">Action Required</h2>
+                <p class="text-sm text-gray-300 mb-4">Agents have requested human approval before proceeding.</p>
+                <div class="flex flex-col space-y-2">
+                    <button onclick="submitHITL('approve')"
+                        class="w-full bg-green-600 hover:bg-green-500 py-2 rounded font-bold transition-colors">Approve
+                        & Push</button>
+                    <input type="text" id="hitlFeedback" placeholder="Steering feedback..."
+                        class="bg-gray-900 border border-gray-600 p-2 rounded text-sm text-white">
+                    <button onclick="submitHITL('steer')"
+                        class="w-full bg-blue-600 hover:bg-blue-500 py-2 rounded font-bold transition-colors">Revise
+                        (Steer)</button>
+                    <button onclick="submitHITL('reject')"
+                        class="w-full bg-red-600 hover:bg-red-500 py-2 rounded font-bold transition-colors">Reject /
+                        Abort</button>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <script>
+        async function fetchState() {
+            try {
+                const res = await fetch('/api/state');
+                const data = await res.json();
+                updateUI(data);
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function updateUI(data) {
+            const statusBadge = document.getElementById('statusBadge');
+            if (data.status === 'idle') {
+                statusBadge.textContent = 'IDLE';
+                statusBadge.className = 'px-3 py-1 rounded-full bg-gray-700 text-sm font-semibold';
+                return;
+            }
+
+            statusBadge.textContent = data.current_phase;
+            if (data.current_phase === 'DONE') {
+                statusBadge.className = 'px-3 py-1 rounded-full bg-green-600 text-sm font-semibold';
+            } else if (data.current_phase === 'WAITING_APPROVAL') {
+                statusBadge.className = 'px-3 py-1 rounded-full bg-yellow-600 text-gray-900 animate-pulse text-sm font-bold';
+            } else {
+                statusBadge.className = 'px-3 py-1 rounded-full bg-blue-600 animate-pulse text-sm font-semibold';
+            }
+
+            // Update Nodes
+            const phases = ["ARCHITECT", "BACKEND", "FRONTEND", "QA"];
+            phases.forEach(phase => {
+                const el = document.getElementById(`node-${phase}`);
+                if (!el) return;
+                const circle = el.querySelector('div');
+                if (data.current_phase === phase) {
+                    el.classList.remove('opacity-50');
+                    circle.className = 'w-12 h-12 rounded-full bg-blue-500 scale-110 shadow-[0_0_15px_rgba(59,130,246,0.6)] flex items-center justify-center font-bold mb-2 transition-all';
+                } else if (phases.indexOf(data.current_phase) > phases.indexOf(phase) || data.current_phase === 'DONE' || data.current_phase === 'WAITING_APPROVAL') {
+                    el.classList.remove('opacity-50');
+                    circle.className = 'w-12 h-12 rounded-full bg-green-500 flex items-center justify-center font-bold mb-2 transition-all';
+                } else {
+                    el.classList.add('opacity-50');
+                    circle.className = 'w-12 h-12 rounded-full bg-gray-600 flex items-center justify-center font-bold mb-2 transition-all';
+                }
+            });
+
+            // HITL Panel
+            const hitlPanel = document.getElementById('hitlPanel');
+            if (data.current_phase === 'WAITING_APPROVAL') {
+                hitlPanel.classList.remove('hidden');
+            } else {
+                hitlPanel.classList.add('hidden');
+            }
+
+            // Telemetry
+            if (data.state) { // wait state doesn't have it nested
+            }
+            if (data.total_execution_time_seconds) {
+                document.getElementById('tel-time').textContent = data.total_execution_time_seconds.toFixed(2) + 's';
+                document.getElementById('tel-tokens').textContent = (data.total_prompt_tokens + data.total_completion_tokens).toLocaleString();
+            }
+
+            // Summaries
+            if (data.context_summaries) {
+                const logs = document.getElementById('logList');
+                logs.innerHTML = '';
+                data.context_summaries.forEach(s => {
+                    const li = document.createElement('li');
+                    li.textContent = '> ' + s;
+                    logs.appendChild(li);
+                });
+                if (data.recent_errors && data.recent_errors.length > 0) {
+                    data.recent_errors.forEach(e => {
+                        const li = document.createElement('li');
+                        li.textContent = '> [ERR] ' + e;
+                        li.className = 'text-red-400';
+                        logs.appendChild(li);
+                    });
+                }
+            }
+        }
+
+        async function startWorkflow() {
+            const task = document.getElementById('taskInput').value;
+            if (!task) return;
+            await fetch(`/api/start?task_description=${encodeURIComponent(task)}`, { method: 'POST' });
+        }
+
+        async function submitHITL(decision) {
+            let feedback = '';
+            if (decision === 'steer') {
+                feedback = document.getElementById('hitlFeedback').value;
+                if (!feedback) { alert("Please provide feedback to steer."); return; }
+            }
+
+            document.getElementById('hitlPanel').classList.add('hidden');
+            await fetch(`/api/hitl?decision=${decision}&feedback=${encodeURIComponent(feedback)}`, { method: 'POST' });
+        }
+
+        setInterval(fetchState, 1500);
+        fetchState();
+    </script>
+</body>
+
+</html>

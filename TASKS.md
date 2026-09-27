@@ -120,3 +120,8 @@ Daftar tugas & status implementasi `MCP Aseps`. Perbarui checklist ini seiring p
 - [x] Refinement JEV (SemIf) System Prompt untuk pencegahan asumsi (Ask Before Act)
 - [x] Penambahan Skill Seeding Boilerplates (FastAPI, React Vite, Docker, dll)
 - [x] Setup dan dokumentasi kerangka kerja Observability (Logging & Cost Tracking)
+
+## Task 10 (Agentic Dashboard UI & Visual HITL)
+- [x] Modifikasi Workflow State untuk *Broadcasting* (SSE / Redis / REST).
+- [x] Konstruksi Antarmuka Dasbor Web Ringan (Status Agen, Telemetri, Token).
+- [x] Integrasi Komponen Tombol Visual Persetujuan (HITL Web UI).
