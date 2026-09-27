@@ -79,3 +79,5 @@ operasional/
 workspace
 workspace/
 
+env/
+.env.remote

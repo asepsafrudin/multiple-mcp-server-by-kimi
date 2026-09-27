@@ -105,3 +105,12 @@ Daftar tugas & status implementasi `MCP Aseps`. Perbarui checklist ini seiring p
 - [x] Implementasi `document_server.py` dan alat render visual (`document_view_page`)
 - [x] Modifikasi `harvester.py` agar mengalokasi parsing PDF ke Baidu OCR / Vision server
 - [x] Eksekutor server OCR & visual viewer terdaftar di `start-all.sh`
+
+## Task 08 (Full-Stack App Dev Agentic Workflow)
+- [x] Menyusun Graph Workflow MAF State Machine (routing Architect -> Backend -> Frontend -> QA)
+- [x] Melakukan injeksi Summarization & Retry Counter Node.
+- [x] Menulis _System Prompt_ 4 agen spesialis (Architect, BE, FE, QA).
+- [x] Menambahkan gerbang logika SemIf antar Architect & BE untuk RAG Poisoning.
+- [x] Melakukan implementasi Regex Whitelist di eksekusi Terminal core:shell.
+- [x] Konfigurasi e2b sandbox / docker untuk eksekusi terminal yang persisten & aman
+- [ ] Uji coba End-to-End untuk generasi *Full-Stack App* (misal: SvelteKit + FastAPI)

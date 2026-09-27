@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import re
 import shlex
 from pathlib import Path
 from typing import Any
@@ -26,8 +27,21 @@ _ALLOWED_COMMANDS = {
 _DANGEROUS_CHARS = {";", "&", "|", "`", "$", "\n", "\r"}
 
 
-def _validate_command(command: str) -> list[str]:
-    # Reject obvious shell metacharacters outside of quotes.
+def _validate_command(command: str, regex_whitelist: list[str] | None = None) -> list[str]:
+    # Jika ada regex whitelist dan command cocok, kita bypass strict check statis
+    if regex_whitelist:
+        for pattern in regex_whitelist:
+            if re.match(pattern, command):
+                # Parsing tetap aman, tetapi karakter "berbahaya" diizinkan jika tercover regex
+                try:
+                    return shlex.split(command)
+                except ValueError as exc:
+                    raise ValueError(f"Invalid command string: {exc}") from exc
+        
+        # Jika ada regex tapi tidak ada yang match, kita tolak langsung
+        raise ValueError("Command did not match any allowed regex patterns for this agent.")
+
+    # Reject obvious shell metacharacters outside of quotes. (Default fallback)
     # This is intentionally conservative; complex pipelines are not allowed.
     if any(ch in command for ch in _DANGEROUS_CHARS):
         raise ValueError(
@@ -61,6 +75,7 @@ async def run_shell(
     cwd: str | None = None,
     timeout: int = 60,
     env_extras: dict[str, str] | None = None,
+    regex_whitelist: list[str] | None = None,
 ) -> dict[str, Any]:
     """Run a single whitelisted shell command inside an allowed working directory.
 
@@ -72,7 +87,7 @@ async def run_shell(
     """
     timeout = min(timeout, 300)
 
-    parts = _validate_command(command)
+    parts = _validate_command(command, regex_whitelist=regex_whitelist)
 
     # Validate cwd
     workdir = Path(cwd).expanduser().resolve() if cwd else Path.cwd()
