@@ -31,6 +31,13 @@ Rencana pengembangan modular multi-server ini, dipetakan dari `ARCHITECTURE.md` 
 - [ ] Multi-tenant / multi-workspace per-user
 - [ ] CI pipeline (lint, format, typecheck `mypy --strict`, test) di setiap push
 
+## Phase 5 — Cognitive Pipeline & Advanced Agentic Workflows 🔮 Visi Mendatang
+Berdasarkan eksperimen kasus bisnis nyata (seperti penerjemahan data regulasi/dokumen hukum tebal), arsitektur Orchestrator perlu berevolusi melampaui alur linier (*Architect->Backend->Frontend*):
+- [ ] **Data Synthesis / Regulatory Pipeline:** Membuat *graph workflow* khusus (misal: `regulatory_graph.py`) yang berfokus pada ektraksi PDF masif (OCR per *chunk*), Semantic Filtering, hingga ekstraksi Hierarki Logika Bisnis (BRD).
+- [ ] **Map-Reduce RAG Engine:** Menyiasati *Context Window Bloat* dengan mekanisme ringkasan iteratif (analisis 10 halaman dirangkum, direduksi silang antar bagian dokumen yang tebal).
+- [ ] **Ambiguity Resolution Triage (HITL-Enhanced):** Menjadikan *UI Dashboard* bukan hanya sebagai persetujuan kode, tapi intervensi manusia *(Interactive Steering)* saat ekstraktor menemui kebingungan/multitafsir dalam redaksi dokumen hukum/kebijakan.
+- [ ] **Seamless Knowledge Harvesting:** Mengotomatiskan injeksi `servers/document` di awal gerbang masuk *Orchestrator*, sehingga ekstraksi data tebal secara luring terjadi tanpa perlu *background cron* mandiri.
+
 ## Catatan
 
 - Prinsip: agnostik agent, local-first, token-efficient, credential terpisah, modular.
