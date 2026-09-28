@@ -13,6 +13,22 @@ def resolve_allowed_directories() -> list[Path]:
     return [Path(d).expanduser().resolve() for d in get_settings().allowed_directories]
 
 
+def _is_within(candidate: Path, allowed: list[Path]) -> bool:
+    """Return True when ``candidate`` is one of ``allowed`` or a descendant of one.
+
+    String based checks (``str(candidate).startswith(str(root))``) are unsafe:
+    a sibling directory such as ``/data/allowed-evil`` shares the ``/data/allowed``
+    prefix and would be accepted. ``Path.is_relative_to`` compares real path
+    components, so the ``==`` case is handled explicitly here.
+    """
+    return any(candidate == root or candidate.is_relative_to(root) for root in allowed)
+
+
+def is_path_allowed(path: str | Path) -> bool:
+    """Resolve ``path`` and check it against the configured allowed directories."""
+    return _is_within(Path(path).expanduser().resolve(), resolve_allowed_directories())
+
+
 class UnsafePathError(ValueError):
     """Raised when a path escapes the configured allowed directories."""
 
@@ -26,8 +42,7 @@ class SafePath:
             raise UnsafePathError(f"Path traversal not allowed: {raw}")
 
         resolved = Path(raw).expanduser().resolve()
-        allowed = resolve_allowed_directories()
-        if not any(str(resolved).startswith(str(a)) for a in allowed):
+        if not _is_within(resolved, resolve_allowed_directories()):
             raise UnsafePathError(f"Access to path not allowed: {raw}")
 
         self.path = resolved

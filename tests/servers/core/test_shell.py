@@ -38,6 +38,18 @@ async def test_reject_disallowed_cwd(allowed_dir: Path) -> None:
         await shell.run_shell("pwd", cwd=str(outside))
 
 
+async def test_reject_sibling_prefix_cwd(allowed_dir: Path) -> None:
+    """Regression TASK-138: cwd sharing a name prefix with an allowed dir.
+
+    ``allowed_dir`` is ``/tmp/.../test_x0``; ``/tmp/.../test_x0-evil`` must be
+    rejected even though ``str().startswith()`` used to accept it.
+    """
+    evil = allowed_dir.parent / f"{allowed_dir.name}-evil"
+    evil.mkdir(exist_ok=True)
+    with pytest.raises(UnsafePathError):
+        await shell.run_shell("pwd", cwd=str(evil))
+
+
 def test_empty_command_rejected() -> None:
     with pytest.raises(ValueError):
         shell._validate_command("   ")
