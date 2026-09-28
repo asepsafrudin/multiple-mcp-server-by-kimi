@@ -81,7 +81,7 @@ def main() -> None:
     L.append("")
     L.append("| Parameter | Nilai |")
     L.append("|---|---|")
-    L.append("| **Router** | `idn23.tunnel.id` (hEX S, RouterOS 7.19.6) |")
+    L.append("| **Router** | `<REDACTED>` (hEX S, RouterOS 7.19.6) |")
     L.append(f"| **Window penangkapan** | {WINDOW_START} WIB s/d selesai (20 menit) |")
     L.append("| **Metode** | Polling `/rest/log` tiap 15 dtk (tanpa mengubah konfigurasi router) |")
     L.append(f"| **Entri baru dalam window** | {len(win)} |")

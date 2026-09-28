@@ -6,17 +6,7 @@ description: Panduan menyambungkan IDE Antigravity / Agent ke PC Kantor via Remo
 
 Workflow ini digunakan ketika USER ingin menghubungkan IDE Antigravity atau Agent AI lokal di Windows/WSL ke mesin kantor (Remote PC) dengan menggunakan koneksi Tailscale atau Cloudflare Tunnel.
 
-## Langkah 1: Persiapan Kredensial dan Host
-Pastikan file konfigurasi `.env.remote` sudah dipopulasi dengan kredensial yang tepat (biasanya ada di `/home/aseps/MCP/env/.env.remote`).
-- **Tailscale Host:** 100.78.237.113
-- **Port SSH:** 8022
 
-## Langkah 2: Evaluasi Jaringan lokal
-Pastikan klien (laptop ini) memiliki aplikasi VPN yang menyala.
-// turbo
-1. Lakukan ping untuk menguji sambungan Tailscale
-`ping -c 2 100.78.237.113`
-2. Jika ada status "Time Out", infokan pengguna untuk menyalakan/login ke aplikasi Tailscale Windows di system tray.
 
 ## Langkah 3: Menyelaraskan Konfigurasi SSH antara WSL & Windows Host
 IDE Antigravity di Windows akan menggunakan konfigurasi dari lingkungan host `C:\Users\username\.ssh`. Jika IDE melaporkan `Could not resolve hostname` atau `No such host is known`, berarti konfigurasinya belum sinkron.

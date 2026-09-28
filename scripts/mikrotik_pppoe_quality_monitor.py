@@ -30,7 +30,7 @@ def get_settings() -> dict[str, Any]:
     root = Path(__file__).resolve().parents[1]
     load_dotenv(root / ".env")
 
-    host = os.getenv("MIKROTIK_HOST") or "idn23.tunnel.id"
+    host = os.getenv("MIKROTIK_HOST")
     port_str = os.getenv("MIKROTIK_PORT")
     port = int(port_str) if port_str and port_str.strip() else 3227
     scheme = os.getenv("MIKROTIK_SCHEME") or "https"

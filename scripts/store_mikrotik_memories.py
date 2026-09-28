@@ -19,7 +19,7 @@ async def main():
         namespace="network",
         content=(
             "MikroTik Router 1 (Default / Remote / WAN):\n"
-            "- Host: idn23.tunnel.id\n"
+            "- Host: <REDACTED>\n"
             "- REST SSL Port: 3227\n"
             "- SSH Port: 3228\n"
             "- Scheme: https\n"
@@ -27,7 +27,7 @@ async def main():
             "- OS: RouterOS v7 (Supports full REST API)\n"
             "- Connection Type: Remote VPN Tunnel (via tunnel.id)"
         ),
-        summary="MikroTik Router 1 Connection (idn23.tunnel.id)",
+        summary="MikroTik Router 1 Connection (<REDACTED>)",
         category="context",
         tags=["mikrotik", "router1", "vpn", "remote"],
         importance=10,

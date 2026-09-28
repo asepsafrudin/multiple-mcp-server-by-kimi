@@ -84,7 +84,7 @@ def main() -> None:
     L.append("")
     L.append("| Parameter | Nilai |")
     L.append("|---|---|")
-    L.append("| **Router** | `idn23.tunnel.id` (hEX S, RouterOS 7.19.6) |")
+    L.append("| **Router** | `<REDACTED>` (hEX S, RouterOS 7.19.6) |")
     L.append(f"| **Window analisis** | {START} – {END} WIB |")
     L.append("| **Sumber data** | Baseline buffer router (diambil 22:58, mencakup 09:46–22:52) |")
     L.append(f"| **Total entri dalam window** | {len(entries)} |")
