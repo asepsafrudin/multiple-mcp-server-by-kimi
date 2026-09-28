@@ -6,7 +6,15 @@ paths = [
     '''(?i)docs/04-operations/api-documentation.md''',
     '''(?i)tests/''',
     '''(?i)\.env\.example$''',
-    '''(?i)README\.md$'''
+    '''(?i)README\.md$''',
+    '''(?i)SECURITY\.md$''',
+    '''(?i)servers/skills/.*\.md$'''
+]
+
+regexes = [
+    '''CHANGE_THIS_TO_SECURE_SECRET_IN_PROD''',
+    '''postgresql://user:pass@localhost:''',
+    '''postgresql://user:password@localhost:'''
 ]
 
 # Connection string patterns for databases
