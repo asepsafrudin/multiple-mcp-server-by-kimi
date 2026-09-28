@@ -4,9 +4,14 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from servers.knowledge import engine
 from servers.knowledge.chunking import chunk_file, chunk_text
 from shared.models import KnowledgeChunk
+
+# Queries that used to crash the raw FTS5 MATCH leg (TASK-140).
+FTS_TRIGGER_QUERIES = ["C++", "(test", "search OR", 'unbalanced "quote']
 
 
 def test_chunk_text_splits_long_text() -> None:
@@ -76,3 +81,34 @@ async def test_get_stats() -> None:
     stats = await engine.get_stats("proj")
     assert stats["total_chunks"] == 1
     assert "py" in stats["file_types"]
+
+
+@pytest.mark.parametrize("query", FTS_TRIGGER_QUERIES)
+async def test_search_survives_fts5_operator_queries(query: str) -> None:
+    """Regression TASK-140: operator queries must not raise a search error."""
+    chunk = await _make_chunk("proj", "ops.cpp", "C++ operator overload (test) search OR quote")
+    await engine.index_chunks([chunk])
+    results = await engine.search(query, project="proj")
+    assert isinstance(results, list)
+
+
+async def test_search_falls_back_to_like_when_match_rejected(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Second safety net: an FTS5 rejection must degrade to LIKE, not raise."""
+    chunk = await _make_chunk("proj", "fb.py", "fallback marker xyzzy")
+    await engine.index_chunks([chunk])
+
+    fallback_calls: list[str] = []
+    original = engine._like_fallback
+
+    async def _spy(db, *, query, project, limit):
+        fallback_calls.append(query)
+        return await original(db, query=query, project=project, limit=limit)
+
+    monkeypatch.setattr(engine, "sanitize_fts_match", lambda _query: "(((")
+    monkeypatch.setattr(engine, "_like_fallback", _spy)
+
+    results = await engine.search("fallback marker", project="proj")
+    assert fallback_calls, "LIKE fallback was not triggered"
+    assert any(isinstance(item, dict) and item.get("file_path") == "fb.py" for item in results)

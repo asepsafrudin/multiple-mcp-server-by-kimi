@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import sqlite3
 import uuid
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
@@ -14,6 +15,7 @@ import sqlite_vec
 
 from shared.config import get_settings
 from shared.embeddings import get_embedding
+from shared.fts_safety import sanitize_fts_match
 from shared.logging import get_logger
 from shared.models import Skill
 
@@ -306,15 +308,19 @@ async def recall(
                 JOIN skill_fts f ON f.skill_id = s.id
                 WHERE skill_fts MATCH ?
             """
-            params = [query]
+            params = [sanitize_fts_match(query)]
             if namespace:
                 sql += " AND s.namespace = ?"
                 params.append(namespace)
             sql += " ORDER BY rank LIMIT ?"
             params.append(remaining)
 
-            cur = await db.execute(sql, params)
-            rows = await cur.fetchall()
+            try:
+                cur = await db.execute(sql, params)
+                rows = await cur.fetchall()
+            except sqlite3.OperationalError as exc:
+                logger.warning("skills_fts_match_failed", error=str(exc))
+                rows = await _like_fallback(db, query=query, namespace=namespace, limit=remaining)
             for row in rows:
                 skill = _row_to_skill(row)
                 if skill.id in seen_ids:
@@ -325,6 +331,30 @@ async def recall(
     if not results:
         return [{"status": "no_results", "message": f"No skills match: '{query}'"}]
     return results
+
+
+async def _like_fallback(
+    db: aiosqlite.Connection,
+    *,
+    query: str,
+    namespace: str | None,
+    limit: int,
+) -> list[Any]:
+    """Second safety net: LIKE search used when FTS5 rejects the expression."""
+    pattern = f"%{query}%"
+    sql = """
+        SELECT s.*
+        FROM skills s
+        WHERE (s.description LIKE ? OR s.name LIKE ? OR IFNULL(s.triggers, '') LIKE ?)
+    """
+    params: list[Any] = [pattern, pattern, pattern]
+    if namespace:
+        sql += " AND s.namespace = ?"
+        params.append(namespace)
+    sql += " ORDER BY s.name LIMIT ?"
+    params.append(limit)
+    cur = await db.execute(sql, params)
+    return list(await cur.fetchall())
 
 
 def _skill_to_dict(skill: Skill, distance: float | None) -> dict[str, Any]:

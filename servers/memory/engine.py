@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import sqlite3
 import uuid
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime, timedelta
@@ -13,6 +14,7 @@ import sqlite_vec
 
 from shared.config import get_settings
 from shared.embeddings import get_embedding
+from shared.fts_safety import sanitize_fts_match
 from shared.logging import get_logger
 from shared.models import MemoryEntry
 
@@ -288,14 +290,15 @@ async def recall(
                 results.append(entry)
                 ids.append(entry.id)
         else:
-            # Fallback to FTS5
+            # Fallback to FTS5. The user query is sanitised into quoted phrases
+            # because FTS5 parses the MATCH operand as query syntax (TASK-140).
             sql = """
                 SELECT m.*
                 FROM memories m
                 JOIN memory_fts f ON f.memory_id = m.id
                 WHERE m.namespace = ? AND memory_fts MATCH ?
             """
-            params = [namespace, query]
+            params = [namespace, sanitize_fts_match(query)]
             if category:
                 sql += " AND m.category = ?"
                 params.append(category)
@@ -307,8 +310,20 @@ async def recall(
                 params.append(min_importance)
             sql += " ORDER BY rank LIMIT ?"
             params.append(limit)
-            cur = await db.execute(sql, params)
-            rows = await cur.fetchall()
+            try:
+                cur = await db.execute(sql, params)
+                rows = await cur.fetchall()
+            except sqlite3.OperationalError as exc:
+                logger.warning("memory_fts_match_failed", error=str(exc))
+                rows = await _like_fallback(
+                    db,
+                    namespace=namespace,
+                    query=query,
+                    category=category,
+                    project=project,
+                    min_importance=min_importance,
+                    limit=limit,
+                )
             results = [_row_to_entry(r) for r in rows]
             ids = [r.id for r in results]
 
@@ -320,6 +335,40 @@ async def recall(
             )
             await db.commit()
         return results
+
+
+async def _like_fallback(
+    db: aiosqlite.Connection,
+    *,
+    namespace: str,
+    query: str,
+    category: str | None,
+    project: str | None,
+    min_importance: int,
+    limit: int,
+) -> list[Any]:
+    """Second safety net: LIKE search used when FTS5 rejects the expression."""
+    pattern = f"%{query}%"
+    sql = """
+        SELECT m.*
+        FROM memories m
+        WHERE m.namespace = ?
+          AND (m.content LIKE ? OR IFNULL(m.summary, '') LIKE ? OR IFNULL(m.tags, '') LIKE ?)
+    """
+    params: list[Any] = [namespace, pattern, pattern, pattern]
+    if category:
+        sql += " AND m.category = ?"
+        params.append(category)
+    if project:
+        sql += " AND m.project = ?"
+        params.append(project)
+    if min_importance > 1:
+        sql += " AND m.importance >= ?"
+        params.append(min_importance)
+    sql += " ORDER BY m.importance DESC, m.updated_at DESC LIMIT ?"
+    params.append(limit)
+    cur = await db.execute(sql, params)
+    return list(await cur.fetchall())
 
 
 async def search_by_filters(

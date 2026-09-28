@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import sqlite3
 import uuid
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
@@ -13,6 +14,7 @@ import sqlite_vec
 
 from shared.config import get_settings
 from shared.embeddings import get_embeddings
+from shared.fts_safety import sanitize_fts_match
 from shared.logging import get_logger
 from shared.models import KnowledgeChunk
 
@@ -282,15 +284,19 @@ async def search(
                 JOIN knowledge_fts f ON f.chunk_id = c.id
                 WHERE knowledge_fts MATCH ?
             """
-            params = [query]
+            params = [sanitize_fts_match(query)]
             if project:
                 sql += " AND c.project = ?"
                 params.append(project)
             sql += " ORDER BY rank LIMIT ?"
             params.append(remaining)
 
-            cur = await db.execute(sql, params)
-            rows = await cur.fetchall()
+            try:
+                cur = await db.execute(sql, params)
+                rows = await cur.fetchall()
+            except sqlite3.OperationalError as exc:
+                logger.warning("knowledge_fts_match_failed", error=str(exc))
+                rows = await _like_fallback(db, query=query, project=project, limit=remaining)
             for row in rows:
                 chunk = _row_to_chunk(row)
                 if chunk.id in seen_ids:
@@ -313,6 +319,26 @@ async def search(
         if not results:
             return [{"status": "no_results", "message": f"No knowledge matches: '{query}'"}]
         return results
+
+
+async def _like_fallback(
+    db: aiosqlite.Connection,
+    *,
+    query: str,
+    project: str | None,
+    limit: int,
+) -> list[Any]:
+    """Second safety net: LIKE search used when FTS5 rejects the expression."""
+    pattern = f"%{query}%"
+    sql = "SELECT c.* FROM knowledge_chunks c WHERE c.content LIKE ?"
+    params: list[Any] = [pattern]
+    if project:
+        sql += " AND c.project = ?"
+        params.append(project)
+    sql += " ORDER BY c.id LIMIT ?"
+    params.append(limit)
+    cur = await db.execute(sql, params)
+    return list(await cur.fetchall())
 
 
 async def delete_project(project: str) -> dict[str, Any]:

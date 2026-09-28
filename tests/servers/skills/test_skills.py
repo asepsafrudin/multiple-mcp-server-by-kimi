@@ -5,8 +5,13 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from servers.skills import engine, loader
 from shared.models import Skill
+
+# Queries that used to crash the raw FTS5 MATCH leg (TASK-140).
+FTS_TRIGGER_QUERIES = ["C++", "(test", "search OR", 'unbalanced "quote']
 
 
 def _skill(name: str, **kwargs) -> Skill:
@@ -38,6 +43,37 @@ async def test_recall() -> None:
     await engine.register(_skill("docker-deploy", triggers=["docker", "deploy"]))
     results = await engine.recall(query="docker deployment", limit=5)
     assert any(r["name"] == "docker-deploy" for r in results)
+
+
+@pytest.mark.parametrize("query", FTS_TRIGGER_QUERIES)
+async def test_recall_survives_fts5_operator_queries(query: str) -> None:
+    """Regression TASK-140: operator queries must not raise a search error."""
+    await engine.register(
+        _skill("cpp-ops", description="C++ operator overload (test) search OR quote")
+    )
+    results = await engine.recall(query=query, limit=5)
+    assert isinstance(results, list)
+
+
+async def test_recall_falls_back_to_like_when_match_rejected(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Second safety net: an FTS5 rejection must degrade to LIKE, not raise."""
+    await engine.register(_skill("fb-skill", description="fallback marker xyzzy"))
+
+    fallback_calls: list[str] = []
+    original = engine._like_fallback
+
+    async def _spy(db, *, query, namespace, limit):
+        fallback_calls.append(query)
+        return await original(db, query=query, namespace=namespace, limit=limit)
+
+    monkeypatch.setattr(engine, "sanitize_fts_match", lambda _query: "(((")
+    monkeypatch.setattr(engine, "_like_fallback", _spy)
+
+    results = await engine.recall(query="fallback marker", limit=5)
+    assert fallback_calls, "LIKE fallback was not triggered"
+    assert any(item.get("name") == "fb-skill" for item in results)
 
 
 async def test_list_skills() -> None:

@@ -4,8 +4,13 @@ from __future__ import annotations
 
 from datetime import UTC
 
+import pytest
+
 from servers.memory import engine
 from shared.models import MemoryEntry
+
+# Queries that used to crash the raw FTS5 MATCH leg (TASK-140).
+FTS_TRIGGER_QUERIES = ["C++", "(test", "search OR", 'unbalanced "quote']
 
 
 async def _store(namespace: str, content: str, **kwargs) -> str:
@@ -81,3 +86,55 @@ async def test_get_stats() -> None:
     stats = await engine.get_stats("ns")
     assert stats["total_memories"] >= 2
     assert "general" in stats["categories"]
+
+
+@pytest.mark.parametrize("query", FTS_TRIGGER_QUERIES)
+async def test_recall_survives_fts5_operator_queries(
+    monkeypatch: pytest.MonkeyPatch, query: str
+) -> None:
+    """Regression TASK-140: operator queries must not raise in the FTS5 leg.
+
+    ``recall`` only uses FTS5 when embeddings are unavailable (e.g. Ollama down),
+    which is exactly the path that used to raise ``sqlite3.OperationalError``.
+    """
+    await _store("ns-fts", "C++ operator overload (test) search OR quote")
+
+    async def _no_embeddings(*_args: object, **_kwargs: object) -> None:
+        raise RuntimeError("embeddings unavailable in test")
+
+    monkeypatch.setattr(engine, "get_embedding", _no_embeddings)
+    results = await engine.recall(query=query, namespace="ns-fts")
+    assert isinstance(results, list)
+
+
+async def test_recall_falls_back_to_like_when_match_rejected(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Second safety net: an FTS5 rejection must degrade to LIKE, not raise."""
+    await _store("ns-like", "fallback marker xyzzy")
+
+    async def _no_embeddings(*_args: object, **_kwargs: object) -> None:
+        raise RuntimeError("embeddings unavailable in test")
+
+    fallback_calls: list[str] = []
+    original = engine._like_fallback
+
+    async def _spy(db, *, namespace, query, category, project, min_importance, limit):
+        fallback_calls.append(query)
+        return await original(
+            db,
+            namespace=namespace,
+            query=query,
+            category=category,
+            project=project,
+            min_importance=min_importance,
+            limit=limit,
+        )
+
+    monkeypatch.setattr(engine, "get_embedding", _no_embeddings)
+    monkeypatch.setattr(engine, "sanitize_fts_match", lambda _query: "(((")
+    monkeypatch.setattr(engine, "_like_fallback", _spy)
+
+    results = await engine.recall(query="fallback marker", namespace="ns-like")
+    assert fallback_calls, "LIKE fallback was not triggered"
+    assert any("fallback marker" in entry.content for entry in results)
