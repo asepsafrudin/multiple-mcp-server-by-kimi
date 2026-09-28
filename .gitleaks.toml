@@ -1,0 +1,43 @@
+title = "Gitleaks configuration for multiple-mcp-server-by-kimi"
+
+[allowlist]
+paths = [
+    '''(?i)archive/''',
+    '''(?i)docs/04-operations/api-documentation.md''',
+    '''(?i)tests/''',
+    '''(?i)\.env\.example$''',
+    '''(?i)README\.md$'''
+]
+
+# Connection string patterns for databases
+[[rules]]
+id = "postgres-conn-string"
+description = "PostgreSQL connection string with credentials"
+regex = '''(?i)postgres(?:ql)?://[a-zA-Z0-9_]+:[^@\s]+@[a-zA-Z0-9.-]+(?::\d+)?/[a-zA-Z0-9_]+'''
+tags = ["database", "credential"]
+
+[[rules]]
+id = "mysql-conn-string"
+description = "MySQL connection string with credentials"
+regex = '''(?i)mysql://[a-zA-Z0-9_]+:[^@\s]+@[a-zA-Z0-9.-]+(?::\d+)?/[a-zA-Z0-9_]+'''
+tags = ["database", "credential"]
+
+[[rules]]
+id = "mongodb-conn-string"
+description = "MongoDB connection string with credentials"
+regex = '''(?i)mongodb(?:\+srv)?://[a-zA-Z0-9_]+:[^@\s]+@[a-zA-Z0-9.-]+(?::\d+)?/[a-zA-Z0-9_]*'''
+tags = ["database", "credential"]
+
+# JWT and session tokens
+[[rules]]
+id = "jwt-token"
+description = "JWT token"
+regex = '''eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}'''
+tags = ["token", "jwt"]
+
+# Generic high-entropy secrets (catches many cases)
+[[rules]]
+id = "generic-api-key"
+description = "Generic API key"
+regex = '''(?i)(?:api[_-]?key|apikey|access[_-]?key|secret[_-]?key)[\s]*[:=][\s]*['\"]?([a-zA-Z0-9_\-]{20,})['\"]?'''
+tags = ["api-key", "credential"]
