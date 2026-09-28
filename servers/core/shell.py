@@ -8,9 +8,8 @@ import shlex
 from pathlib import Path
 from typing import Any
 
-from shared.config import get_settings
 from shared.logging import get_logger
-from shared.security import UnsafePathError
+from shared.security import UnsafePathError, is_path_allowed
 
 logger = get_logger("mcp.core.shell")
 
@@ -89,10 +88,9 @@ async def run_shell(
 
     parts = _validate_command(command, regex_whitelist=regex_whitelist)
 
-    # Validate cwd
+    # Validate cwd (prefix-safe: is_relative_to, not str().startswith())
     workdir = Path(cwd).expanduser().resolve() if cwd else Path.cwd()
-    allowed = [Path(d).expanduser().resolve() for d in get_settings().allowed_directories]
-    if not any(str(workdir).startswith(str(a)) for a in allowed):
+    if not is_path_allowed(workdir):
         raise UnsafePathError(f"Working directory not allowed: {cwd}")
     if not workdir.exists():
         raise FileNotFoundError(f"Working directory does not exist: {workdir}")
