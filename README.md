@@ -1,5 +1,9 @@
 # MCP Aseps — Modular Multi-Server Suite
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
+[![Code style: ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+
 Agnostik, modular MCP (Model Context Protocol) server suite untuk agent yang berbasis memori, pengetahuan, skill, dan integrasi eksternal. Dirancang untuk efisiensi token, local-first storage, dan mudah di-deploy di berbagai editor (Claude Desktop, Cline, Cursor, dll).
 
 ## Fitur Utama
@@ -92,6 +96,13 @@ make stop      # stop semua server
 make backup    # backup SQLite databases
 ```
 
+## CI/CD Status
+
+GitHub Actions workflows aktif di repo ini:
+- **`ci.yml`** — menjalankan pytest + ruff + mypy pada setiap push ke `main` dan setiap PR
+- **`lint.yml`** — fast lane: hanya ruff (untuk feedback cepat)
+- **`typecheck.yml`** — slow lane: mypy --strict harian (nightly cron)
+
 ## Dokumentasi Detail
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) — arsitektur & data flow
@@ -105,4 +116,4 @@ make backup    # backup SQLite databases
 
 ## Lisensi
 
-MIT — lihat [LICENSE](LICENSE) jika tersedia.
+MIT — lihat [LICENSE](LICENSE) untuk detail lengkap.
