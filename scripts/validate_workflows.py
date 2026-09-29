@@ -63,7 +63,7 @@ class _WorkflowLoader(yaml.SafeLoader):
 
     PyYAML implements YAML 1.1, where ``on``, ``off``, ``yes`` and ``no`` are
     booleans. That silently turns the workflow trigger key ``on:`` into the key
-    ``True``, which breaks any consumer expecting the string ``\"on\"``.
+    ``True``, which breaks any consumer expecting the string ``"on"``.
     GitHub Actions uses YAML 1.2, so only ``true``/``false`` are booleans here.
     """
 
