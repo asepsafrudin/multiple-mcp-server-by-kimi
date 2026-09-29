@@ -1,0 +1,60 @@
+# Dependabot configuration for automated dependency updates
+# https://docs.github.com/en/code-security/dependabot
+
+version: 2
+
+updates:
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "03:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "python"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    # Group minor + patch updates together to reduce PR noise
+    groups:
+      production-minor:
+        applies-to: version-updates
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+      production-major:
+        applies-to: version-updates
+        patterns:
+          - "*"
+        update-types:
+          - "major"
+    # Allow up to 5 minor/patch PRs to be combined per week
+    # Major version updates are kept separate for manual review
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    groups:
+      actions-minor:
+        applies-to: version-updates
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
