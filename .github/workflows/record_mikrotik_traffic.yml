@@ -11,10 +11,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
@@ -112,5 +112,12 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add logs/
-          # Only commit and push if there are changes
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-record traffic: $(date +'%Y-%m-%d')" && git push)
+          # Only commit and push if there are changes. Written as an explicit
+          # if/else because `A && B || C` is not if-then-else (actionlint
+          # SC2015): C can run when B fails for an unrelated reason.
+          if ! git diff --quiet || ! git diff --staged --quiet; then
+            git commit -m "Auto-record traffic: $(date +'%Y-%m-%d')"
+            git push
+          else
+            echo "No changes to commit."
+          fi

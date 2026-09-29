@@ -1,4 +1,4 @@
-.PHONY: install dev test lint format clean sweep start stop backup docs
+.PHONY: install dev test lint ci-lint format clean sweep start stop backup docs
 
 ROOT := $(shell pwd)
 VENV := $(ROOT)/.venv
@@ -34,6 +34,16 @@ test:
 lint:
 	$(RUFF) check shared servers tests scripts
 	$(RUFF) format --check shared servers tests scripts
+
+# Validate the CI definitions themselves, before pushing. Two layers:
+#   1. scripts/validate_workflows.py — deterministic YAML/schema checks
+#   2. scripts/run_actionlint.sh     — semantic checks (deprecated actions,
+#                                      needs/matrix refs, shellcheck)
+# Set ACTIONLINT_REQUIRED=1 to fail instead of skipping when actionlint and
+# docker are both unavailable.
+ci-lint:
+	$(PYTHON) scripts/validate_workflows.py
+	bash scripts/run_actionlint.sh
 
 format:
 	$(RUFF) check --fix shared servers tests scripts

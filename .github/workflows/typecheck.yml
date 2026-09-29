@@ -39,7 +39,10 @@ jobs:
         run: |
           set -o pipefail
           mypy shared servers 2>&1 | tee /tmp/mypy.log || true
-          echo "### mypy --strict (advisory — see TASK-148)" >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
-          tail -n 1 /tmp/mypy.log >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          # Grouped redirect instead of one `>>` per line (actionlint SC2129).
+          {
+            echo "### mypy --strict (advisory — see TASK-148)"
+            echo '```'
+            tail -n 1 /tmp/mypy.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

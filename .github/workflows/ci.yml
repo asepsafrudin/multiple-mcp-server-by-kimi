@@ -12,6 +12,35 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  workflow-lint:
+    name: workflow lint (actionlint + schema)
+    runs-on: ubuntu-latest
+    env:
+      # Turn "actionlint could not run" into a failure instead of a silent
+      # skip, so this gate can never quietly disappear from the pipeline.
+      ACTIONLINT_REQUIRED: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install PyYAML
+        run: |
+          python -m pip install --upgrade pip
+          pip install "pyyaml>=6.0"
+
+      - name: Validate workflow YAML (deterministic checks)
+        run: python scripts/validate_workflows.py
+
+      - name: Run actionlint (semantic checks)
+        # Uses the version-pinned rhysd/actionlint Docker image via
+        # scripts/run_actionlint.sh. The same command runs locally with
+        # `make ci-lint`, so a green local run means a green CI job.
+        run: bash scripts/run_actionlint.sh
+
   test:
     name: test (py${{ matrix.python-version }})
     runs-on: ubuntu-latest

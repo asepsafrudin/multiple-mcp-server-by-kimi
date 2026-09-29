@@ -3,3 +3,23 @@ repos:
     rev: v8.18.2
     hooks:
       - id: gitleaks
+
+  # TASK-153 — CI Self-Validation Gate.
+  # Both hooks scan the whole .github/workflows directory (pass_filenames is
+  # false) because job-to-job references such as `needs:` only make sense when
+  # every workflow in the directory is visible at once.
+  - repo: local
+    hooks:
+      - id: validate-workflows
+        name: validate GitHub Actions workflows (YAML + schema)
+        entry: python3 scripts/validate_workflows.py
+        language: system
+        files: ^\.github/workflows/.*\.ya?ml$
+        pass_filenames: false
+
+      - id: actionlint
+        name: actionlint (semantic workflow checks)
+        entry: bash scripts/run_actionlint.sh
+        language: system
+        files: ^\.github/workflows/.*\.ya?ml$
+        pass_filenames: false
