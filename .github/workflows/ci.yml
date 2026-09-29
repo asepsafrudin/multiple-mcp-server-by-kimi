@@ -36,8 +36,8 @@ jobs:
           pip install -e ".[dev]"
 
       - name: Run pytest
-        # `make test` resolves the interpreter via the Makefile fallback so it
-        # works both locally (.venv) and in CI (runner Python).
+        # `make test` resolves the interpreter through the Makefile fallback, so
+        # it works both locally (.venv present) and in CI (runner Python).
         run: make test
 
       - name: Run ruff (check + format)
@@ -45,8 +45,9 @@ jobs:
 
       - name: Run mypy (advisory)
         # mypy --strict is tracked in typecheck.yml (advisory until TASK-148).
-        # Advisory here so PRs are not blocked by pre-existing type gaps.
-        run: mypy shared servers --ignore-missing-imports || echo "mypy advisory: non-blocking"
+        # Advisory here too, so PRs are not blocked by pre-existing type gaps.
+        run: |
+          mypy shared servers --ignore-missing-imports || echo "mypy advisory - non-blocking"
 
   build:
     name: build sanity
@@ -68,7 +69,34 @@ jobs:
       - name: Verify installed entrypoints
         # Previously this used entry_points()['console_scripts'], which raises
         # KeyError on Python 3.12 (the selectable-groups dict API was removed).
-        # The group= keyword is the supported API on 3.10+.
+        # The group= keyword is the supported API on Python 3.10+.
         run: |
           pip install --no-deps dist/*.whl
-          python -c "import importlib.metadata as m; eps = sorted(e.name for e in m.entry_points(group='console_scripts') if e.name.startswith('mcp-')); print('entrypoints:', eps); assert len(eps) >= 12, f'expected >=12 mcp- entrypoints, got {len(eps)}'"
+          python - <<'PY'
+          import importlib.metadata as m
+
+          expected = {
+              "mcp-core-server",
+              "mcp-memory-server",
+              "mcp-knowledge-server",
+              "mcp-skills-server",
+              "mcp-gmail-bridge",
+              "mcp-telegram-bridge",
+              "mcp-gemini-bridge",
+              "mcp-vision-bridge",
+              "mcp-mikrotik-bridge",
+              "mcp-orchestrator",
+              "mcp-decision-server",
+              "mcp-document-server",
+          }
+          got = {
+              e.name
+              for e in m.entry_points(group="console_scripts")
+              if e.name.startswith("mcp-")
+          }
+          print("expected:", sorted(expected))
+          print("got     :", sorted(got))
+          missing = expected - got
+          assert not missing, f"missing entrypoints: {sorted(missing)}"
+          print("OK - all 12 console scripts are registered")
+          PY
