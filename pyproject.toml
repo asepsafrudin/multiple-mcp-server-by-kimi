@@ -2,6 +2,7 @@
 name = "mcp-aseps"
 version = "0.1.0"
 description = "Modular multi-server MCP suite: core tools, memory, knowledge, skills, and integrations."
+license = {text = "MIT"}
 requires-python = ">=3.12"
 dependencies = [
     "fastmcp>=3.0",
@@ -54,10 +55,16 @@ mcp-document-server = "servers.document.server:main"
 line-length = 100
 target-version = "py312"
 
+[tool.ruff.lint]
+extend-select = ["I"]  # isort
+# TODO TASK-148: gradual ramp to stricter rules
+# extend-select = ["I", "UP", "B", "SIM", "RUF"]
+
 [tool.mypy]
 python_version = "3.12"
 strict = true
 exclude = [".venv", "archive", "external"]
+# TODO TASK-148: consider relaxing check_untyped_defs gradual ramp
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
