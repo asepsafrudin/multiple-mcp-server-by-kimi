@@ -185,6 +185,68 @@ make test
 make restart
 ```
 
+## Validasi CI Sebelum Push
+
+Perubahan pada `.github/workflows/` **wajib** divalidasi sebelum di-push.
+Workflow yang belum pernah dieksekusi tidak boleh dianggap benar — gate ini
+ada karena sebuah `run:` berisi `": "` di dalam plain scalar membuat seluruh
+`ci.yml` gagal di-parse, sehingga GitHub Actions akan menolaknya mentah-mentah.
+
+```bash
+make ci-lint
+```
+
+Target ini menjalankan dua lapis pemeriksaan:
+
+| Lapis | Perintah | Yang dicek |
+|-------|----------|------------|
+| Deterministik | `python3 scripts/validate_workflows.py` | YAML valid (termasuk jebakan `": "` di plain scalar), duplicate key, `jobs` & `on` wajib ada, `runs-on` + `steps`, langkah harus punya tepat satu dari `uses`/`run`, `needs:` menunjuk job yang ada, siklus `needs`, job `uses:` tanpa `runs-on` |
+| Semantik | `bash scripts/run_actionlint.sh` | versi action yang terlalu tua, referensi `needs:`/matrix yang tidak resolve, validitas ekspresi `${{ }}`, shellcheck pada setiap blok `run:` |
+
+### actionlint
+
+`scripts/run_actionlint.sh` memakai binary `actionlint` lokal bila ada; jika
+tidak, ia memakai image Docker `rhysd/actionlint:1.7.7` (versi yang sama dengan
+CI). Jika keduanya tidak tersedia, langkah ini **dilewati dengan peringatan** —
+lapis deterministik tetap dijalankan.
+
+Untuk menjadikannya wajib (gagal, bukan dilewati):
+
+```bash
+ACTIONLINT_REQUIRED=1 make ci-lint
+```
+
+Job `workflow-lint` di CI selalu memakai `ACTIONLINT_REQUIRED=1`, sehingga gate
+tidak bisa hilang tanpa terlihat.
+
+Instalasi opsional:
+
+```bash
+# binary native (lebih cepat, tidak butuh Docker)
+bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+
+# atau cukup andalkan Docker
+docker pull rhysd/actionlint:1.7.7
+```
+
+### Pre-commit
+
+Hook `validate-workflows` dan `actionlint` sudah terpasang di
+`.pre-commit-config.yaml` dan hanya aktif saat file di `.github/workflows/`
+berubah:
+
+```bash
+pre-commit install
+pre-commit run --all-files
+```
+
+### Catatan branch protection
+
+Job `workflow-lint` sengaja dibuat **gagal keras** (bukan advisory). Agar benar-benar
+memblokir merge, tambahkan `workflow-lint` ke daftar *required status checks* di
+**Settings → Branches → Branch protection rules**. Itu pengaturan repositori dan
+tidak bisa dideklarasikan dari dalam file workflow.
+
 ## Troubleshooting
 
 | Masalah | Solusi |
