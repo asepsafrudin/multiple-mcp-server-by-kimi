@@ -1,0 +1,42 @@
+name: Typecheck (Nightly)
+
+on:
+  schedule:
+    # Run nightly at 03:00 UTC (10:00 WIB) to catch type drift early
+    - cron: "0 3 * * *"
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: typecheck-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  mypy:
+    name: mypy --strict
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          # Install type stubs for third-party libs as needed
+          # pip install types-requests types-PyYAML
+      - name: Run mypy --strict
+        # Strict mode is already set in pyproject.toml [tool.mypy].
+        # This workflow enforces it on every push + nightly to catch drift.
+        run: |
+          mypy shared servers
+      - name: Generate coverage report (advisory)
+        if: always()
+        # TODO TASK-148: turn into blocking check once coverage >85%
+        run: |
+          echo "mypy coverage report will be added in TASK-148"
