@@ -9,8 +9,6 @@ Usage:
 """
 
 import argparse
-import json
-import math
 import statistics
 import time
 from collections import deque
@@ -156,26 +154,27 @@ def ping_client(settings: dict[str, Any], address: str, count: int = 4) -> dict[
 def parse_duration_to_ms(val: str) -> float:
     """Convert RouterOS ping duration string (e.g. '14ms671us', '420us', '10.5ms') to float ms."""
     import re
+
     val = val.strip().lower()
-    
+
     # Check if format matches ms + us, e.g. "14ms671us"
-    m_ms_us = re.match(r'(\d+(?:\.\d+)?)ms(\d+(?:\.\d+)?)us', val)
+    m_ms_us = re.match(r"(\d+(?:\.\d+)?)ms(\d+(?:\.\d+)?)us", val)
     if m_ms_us:
         return float(m_ms_us.group(1)) + (float(m_ms_us.group(2)) / 1000.0)
-        
+
     # Check if format matches ms only, e.g. "14ms"
-    m_ms = re.match(r'(\d+(?:\.\d+)?)ms', val)
+    m_ms = re.match(r"(\d+(?:\.\d+)?)ms", val)
     if m_ms:
         return float(m_ms.group(1))
-        
+
     # Check if format matches us only, e.g. "420us"
-    m_us = re.match(r'(\d+(?:\.\d+)?)us', val)
+    m_us = re.match(r"(\d+(?:\.\d+)?)us", val)
     if m_us:
         return float(m_us.group(1)) / 1000.0
-        
+
     # Fallback
     try:
-        cleaned = re.sub(r'[^\d\.]', '', val)
+        cleaned = re.sub(r"[^\d\.]", "", val)
         return float(cleaned) if cleaned else 0.0
     except ValueError:
         return 0.0
@@ -290,7 +289,9 @@ def monitor_pppoe_quality(
     """Monitor PPPoE interface quality for specified duration."""
     print("=" * 100)
     print(f"PPPoE Quality Monitor - {settings['host']}")
-    print(f"Duration: {duration}s | Interval: {interval}s | Window: {window} | Ping every: {ping_interval}s")
+    print(
+        f"Duration: {duration}s | Interval: {interval}s | Window: {window} | Ping every: {ping_interval}s"
+    )
     print("=" * 100)
 
     client = build_client(settings)
@@ -345,7 +346,10 @@ def monitor_pppoe_quality(
             for iface in current_ifaces:
                 name = iface["name"]
                 if name not in throughput_history:
-                    throughput_history[name] = {"rx": deque(maxlen=window), "tx": deque(maxlen=window)}
+                    throughput_history[name] = {
+                        "rx": deque(maxlen=window),
+                        "tx": deque(maxlen=window),
+                    }
                     ping_history[name] = {
                         "loss_pct": deque(maxlen=5),
                         "jitter": deque(maxlen=5),
@@ -380,7 +384,9 @@ def monitor_pppoe_quality(
                     name = iface["name"]
                     ip_address = ip_mappings.get(name)
                     if not ip_address:
-                        print(f"Skipping ping for {name}: no associated IP address found in /ip/address")
+                        print(
+                            f"Skipping ping for {name}: no associated IP address found in /ip/address"
+                        )
                         continue
                     ping_result = ping_client(settings, ip_address, count=3)
                     if ping_result.get("status") == "ok":
@@ -412,22 +418,32 @@ def monitor_pppoe_quality(
                 tx_rate = current_throughput.get(name, {}).get("tx", 0.0)
 
                 # Ping metrics
-                loss_pct = statistics.mean(ping_history[name]["loss_pct"]) if ping_history[name]["loss_pct"] else 0.0
-                jitter = statistics.mean(ping_history[name]["jitter"]) if ping_history[name]["jitter"] else 0.0
+                loss_pct = (
+                    statistics.mean(ping_history[name]["loss_pct"])
+                    if ping_history[name]["loss_pct"]
+                    else 0.0
+                )
+                jitter = (
+                    statistics.mean(ping_history[name]["jitter"])
+                    if ping_history[name]["jitter"]
+                    else 0.0
+                )
 
                 score = calculate_score(cv_rx, cv_tx, loss_pct, jitter)
                 status = get_status(score, loss_pct)
 
-                results.append({
-                    "name": name,
-                    "rx_rate": rx_rate,
-                    "tx_rate": tx_rate,
-                    "cv": cv_avg,
-                    "jitter": jitter,
-                    "loss_pct": loss_pct,
-                    "score": score,
-                    "status": status,
-                })
+                results.append(
+                    {
+                        "name": name,
+                        "rx_rate": rx_rate,
+                        "tx_rate": tx_rate,
+                        "cv": cv_avg,
+                        "jitter": jitter,
+                        "loss_pct": loss_pct,
+                        "score": score,
+                        "status": status,
+                    }
+                )
 
             # Sort by score (worst first)
             results.sort(key=lambda x: x["score"])
@@ -455,8 +471,8 @@ async def publish_to_memory_server_sse(
 ) -> bool:
     """Attempt to publish a memory using the running MCP Memory Server over SSE."""
     try:
-        from mcp.client.sse import sse_client
         from mcp import ClientSession
+        from mcp.client.sse import sse_client
 
         url = "http://127.0.0.1:8001/sse"
         async with sse_client(url) as (read, write):
@@ -488,6 +504,7 @@ async def publish_to_memory_local(
     try:
         import sys
         from pathlib import Path
+
         root = Path(__file__).resolve().parents[1]
         if str(root) not in sys.path:
             sys.path.insert(0, str(root))
@@ -509,7 +526,7 @@ async def publish_to_memory_local(
         )
         memory_id = await engine.store(entry)
         print(f"[Ingest] Successfully saved to local SQLite DB. Entry ID: {memory_id}")
-        
+
         # Close connection to allow clean shutdown of aiosqlite threads
         if engine._db is not None:
             await engine._db.close()
@@ -557,6 +574,7 @@ def ingest_unstable_client_memory(
 
         if loop.is_running():
             import threading
+
             threading.Thread(target=lambda: asyncio.run(_run())).start()
         else:
             loop.run_until_complete(_run())
@@ -578,14 +596,18 @@ def generate_report(
     report_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     with open(report_path, "w") as f:
-        f.write(f"# PPPoE Quality Monitoring Report\n\n")
+        f.write("# PPPoE Quality Monitoring Report\n\n")
         f.write(f"**Generated:** {report_time}  \n")
         f.write(f"**Duration:** {duration} seconds  \n")
         f.write(f"**Interfaces Monitored:** {len(results)} PPPoE clients\n\n")
 
         f.write("## Summary\n\n")
-        f.write("| Ranking | Client | RX Avg | TX Avg | CV% | Jitter (ms) | Loss% | Score | Status |\n")
-        f.write("|---------|--------|--------|--------|-----|-------------|-------|-------|--------|\n")
+        f.write(
+            "| Ranking | Client | RX Avg | TX Avg | CV% | Jitter (ms) | Loss% | Score | Status |\n"
+        )
+        f.write(
+            "|---------|--------|--------|--------|-----|-------------|-------|-------|--------|\n"
+        )
 
         for idx, res in enumerate(results, 1):
             rx_avg = format_bytes(int(res["rx_rate"]))
@@ -602,7 +624,9 @@ def generate_report(
             f.write("\n## ⚠️ Unstable Clients (Prioritized)\n\n")
             for res in unstable:
                 f.write(f"- **{res['name']}**: {res['status']}\n")
-                f.write(f"  - CV: {res['cv']:.1f}%, Jitter: {res['jitter']:.1f}ms, Loss: {res['loss_pct']:.1f}%\n")
+                f.write(
+                    f"  - CV: {res['cv']:.1f}%, Jitter: {res['jitter']:.1f}ms, Loss: {res['loss_pct']:.1f}%\n"
+                )
                 issues = []
                 if res["cv"] > 70:
                     issues.append("High throughput fluctuation")
@@ -627,7 +651,9 @@ def generate_report(
         f.write(f"- 🔴 Critical: {critical_count} clients\n\n")
 
         if critical_count > 0:
-            f.write("**Action Required:** Check physical connection, signal strength, and MTU settings for critical clients.\n")
+            f.write(
+                "**Action Required:** Check physical connection, signal strength, and MTU settings for critical clients.\n"
+            )
         elif unstable_count > 0:
             f.write("**Recommendation:** Monitor unstable clients for potential degradation.\n")
         else:
@@ -639,9 +665,13 @@ def generate_report(
     print(f"Log saved to: {log_path}")
 
     # Recommendation 3: Ingest unstable/critical PPPoE clients directly to memory
-    unstable_clients = [r for r in results if "UNSTABLE" in r["status"] or "CRITICAL" in r["status"]]
+    unstable_clients = [
+        r for r in results if "UNSTABLE" in r["status"] or "CRITICAL" in r["status"]
+    ]
     if unstable_clients:
-        print(f"\n[Ingest] Found {len(unstable_clients)} unstable client(s). Publishing metrics to mcp-memory-server...")
+        print(
+            f"\n[Ingest] Found {len(unstable_clients)} unstable client(s). Publishing metrics to mcp-memory-server..."
+        )
         for res in unstable_clients:
             issues = []
             if res["cv"] > 70:
@@ -654,7 +684,7 @@ def generate_report(
                 issues.append("Some packet loss")
             if res["jitter"] > 20:
                 issues.append("High jitter")
-            
+
             try:
                 ingest_unstable_client_memory(
                     client_name=res["name"],
@@ -662,7 +692,7 @@ def generate_report(
                     cv=res["cv"],
                     jitter=res["jitter"],
                     loss_pct=res["loss_pct"],
-                    issues=issues
+                    issues=issues,
                 )
             except Exception as e:
                 print(f"Warning: Failed to ingest memory for {res['name']}: {e}")
@@ -670,11 +700,27 @@ def generate_report(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Monitor PPPoE interface quality in real-time")
-    parser.add_argument("--interval", type=float, default=2.0, help="Polling interval in seconds (default: 2.0)")
-    parser.add_argument("--window", type=int, default=30, help="Rolling window size for CV calculation (default: 30)")
-    parser.add_argument("--ping-interval", type=int, default=30, help="Ping test interval in seconds (default: 30)")
-    parser.add_argument("--duration", type=int, default=300, help="Monitoring duration in seconds (default: 300 = 5 min)")
-    parser.add_argument("--output", type=str, default="logs", help="Output directory for reports (default: logs/)")
+    parser.add_argument(
+        "--interval", type=float, default=2.0, help="Polling interval in seconds (default: 2.0)"
+    )
+    parser.add_argument(
+        "--window",
+        type=int,
+        default=30,
+        help="Rolling window size for CV calculation (default: 30)",
+    )
+    parser.add_argument(
+        "--ping-interval", type=int, default=30, help="Ping test interval in seconds (default: 30)"
+    )
+    parser.add_argument(
+        "--duration",
+        type=int,
+        default=300,
+        help="Monitoring duration in seconds (default: 300 = 5 min)",
+    )
+    parser.add_argument(
+        "--output", type=str, default="logs", help="Output directory for reports (default: logs/)"
+    )
     args = parser.parse_args()
 
     try:

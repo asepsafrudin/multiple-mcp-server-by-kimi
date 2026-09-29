@@ -171,12 +171,14 @@ def monitor_throughput(
                     prev = prev_stats.get(interface, {})
 
                     rx_rate = (
-                        (rx_bytes_new - _to_int(prev.get("rx-byte", prev.get("bytes", 0)))) / interval
+                        (rx_bytes_new - _to_int(prev.get("rx-byte", prev.get("bytes", 0))))
+                        / interval
                         if prev
                         else None
                     )
                     tx_rate = (
-                        (tx_bytes_new - _to_int(prev.get("tx-byte", prev.get("tx-byte", 0)))) / interval
+                        (tx_bytes_new - _to_int(prev.get("tx-byte", prev.get("tx-byte", 0))))
+                        / interval
                         if prev
                         else None
                     )
@@ -192,12 +194,14 @@ def monitor_throughput(
                     prev = prev_stats.get(name, {})
 
                     rx_rate = (
-                        (rx_bytes_new - _to_int(prev.get("rx-byte", prev.get("bytes", 0)))) / interval
+                        (rx_bytes_new - _to_int(prev.get("rx-byte", prev.get("bytes", 0))))
+                        / interval
                         if prev
                         else None
                     )
                     tx_rate = (
-                        (tx_bytes_new - _to_int(prev.get("tx-byte", prev.get("tx-byte", 0)))) / interval
+                        (tx_bytes_new - _to_int(prev.get("tx-byte", prev.get("tx-byte", 0))))
+                        / interval
                         if prev
                         else None
                     )

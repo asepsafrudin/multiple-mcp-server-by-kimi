@@ -17,9 +17,15 @@ from pathlib import Path
 
 import pytest
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
 ORCHESTRATOR_MAIN = REPO_ROOT / "servers" / "orchestrator" / "main.py"
+
+
+def _reload_orchestrator() -> None:
+    """Drop cached orchestrator modules so the next import re-runs module code."""
+    for mod_name in list(sys.modules):
+        if mod_name.startswith("servers.orchestrator"):
+            sys.modules.pop(mod_name, None)
 
 
 class TestPreflightCheck:
@@ -28,12 +34,11 @@ class TestPreflightCheck:
     def test_preflight_passes_with_ollama_defaults(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """preflight_check() should succeed when OPENAI_BASE_URL points to local Ollama."""
         monkeypatch.setenv("OPENAI_BASE_URL", "http://localhost:11434/v1")
-        # OPENAI_API_KEY auto-set to 'ollama' by preflight when local Ollama is detected
+        # OPENAI_API_KEY is auto-set to 'ollama' by preflight for local Ollama.
         monkeypatch.delenv("OPENAI_API_KEY", raising=False)
 
         from servers.orchestrator.main import preflight_check
 
-        # Should not raise
         preflight_check()
         assert os.environ["OPENAI_API_KEY"] == "ollama"
 
@@ -49,15 +54,30 @@ class TestPreflightCheck:
         with pytest.raises(RuntimeError, match="OPENAI_API_KEY"):
             preflight_check()
 
+    @pytest.mark.parametrize(
+        "bad_url",
+        ["not-a-url", "ftp://example.com/v1", "http://", ":11434/v1"],
+    )
+    def test_preflight_rejects_malformed_base_url(
+        self, monkeypatch: pytest.MonkeyPatch, bad_url: str
+    ) -> None:
+        """A malformed OPENAI_BASE_URL must fail fast, not fail later at call time."""
+        monkeypatch.setenv("OPENAI_BASE_URL", bad_url)
+        monkeypatch.setenv("OPENAI_API_KEY", "irrelevant")
+
+        from servers.orchestrator.main import preflight_check
+
+        with pytest.raises(RuntimeError, match="OPENAI_BASE_URL"):
+            preflight_check()
+
 
 class TestDependencyImportFailFast:
     """Verify the orchestrator raises RuntimeError when agent_framework is missing."""
 
     def test_import_error_raises_runtime_error_without_allow_mock(
-        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Without ALLOW_MOCK_FALLBACK, missing agent_framework -> RuntimeError."""
-        # Simulate missing agent_framework
         import builtins
 
         original_import = builtins.__import__
@@ -69,11 +89,7 @@ class TestDependencyImportFailFast:
 
         monkeypatch.setattr(builtins, "__import__", mock_import)
         monkeypatch.delenv("ALLOW_MOCK_FALLBACK", raising=False)
-
-        # Force a fresh import of orchestrator.main
-        for mod_name in list(sys.modules):
-            if mod_name.startswith("servers.orchestrator"):
-                sys.modules.pop(mod_name, None)
+        _reload_orchestrator()
 
         with pytest.raises(RuntimeError, match="agent_framework is required"):
             importlib.import_module("servers.orchestrator.main")
@@ -93,29 +109,20 @@ class TestDependencyImportFailFast:
 
         monkeypatch.setattr(builtins, "__import__", mock_import)
         monkeypatch.setenv("ALLOW_MOCK_FALLBACK", "1")
+        _reload_orchestrator()
 
-        for mod_name in list(sys.modules):
-            if mod_name.startswith("servers.orchestrator"):
-                sys.modules.pop(mod_name, None)
-
-        # Should NOT raise - falls back to legacy mock with warning
+        # Should NOT raise - falls back to the legacy mock with a stderr warning.
         importlib.import_module("servers.orchestrator.main")
 
 
 class TestMainEntryPointExitCode:
     """Verify main() exits with non-zero code on startup failure."""
 
-    def test_main_exits_nonzero_on_preflight_failure(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_main_exits_nonzero_on_preflight_failure(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """main() must exit with code 1 if preflight_check fails."""
-        # Force preflight failure by pointing to remote base without API key
         monkeypatch.setenv("OPENAI_BASE_URL", "https://api.invalid-provider.example/v1")
         monkeypatch.delenv("OPENAI_API_KEY", raising=False)
-
-        for mod_name in list(sys.modules):
-            if mod_name.startswith("servers.orchestrator"):
-                sys.modules.pop(mod_name, None)
+        _reload_orchestrator()
 
         from servers.orchestrator import main as orch_main
 
@@ -129,23 +136,36 @@ class TestMainEntryPointExitCode:
     reason="orchestrator main.py not present",
 )
 class TestCliIntegration:
-    """Subprocess tests verifying actual CLI behaviour."""
+    """Subprocess test verifying the process-level exit code on import failure."""
 
-    def test_missing_dependency_exits_nonzero(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Subprocess invocation should exit non-zero when deps missing."""
+    # Bootstraps a subprocess in which `import agent_framework` raises, then
+    # executes the real module. Simply clearing PYTHONPATH is NOT enough to
+    # simulate a missing dependency, because site-packages stays on sys.path.
+    _BOOTSTRAP = (
+        "import builtins, sys\n"
+        "_real_import = builtins.__import__\n"
+        "def _fake_import(name, *args, **kwargs):\n"
+        "    if name == 'agent_framework' or name.startswith('agent_framework.'):\n"
+        "        raise ImportError('simulated missing ' + name)\n"
+        "    return _real_import(name, *args, **kwargs)\n"
+        "builtins.__import__ = _fake_import\n"
+        "path = sys.argv[1]\n"
+        "source = open(path, encoding='utf-8').read()\n"
+        "exec(compile(source, path, 'exec'), {'__name__': '__main__', '__file__': path})\n"
+    )
+
+    def test_import_failure_exits_nonzero(self) -> None:
+        """Launching the module without agent_framework must exit non-zero."""
         env = os.environ.copy()
         env.pop("ALLOW_MOCK_FALLBACK", None)
-        # Strip agent_framework from PYTHONPATH to force ImportError
-        env["PYTHONPATH"] = "/nonexistent"
 
         result = subprocess.run(
-            [sys.executable, str(ORCHESTRATOR_MAIN)],
+            [sys.executable, "-c", self._BOOTSTRAP, str(ORCHESTRATOR_MAIN)],
             capture_output=True,
             text=True,
             env=env,
-            timeout=10,
+            timeout=15,
         )
-        # Either: imports fail at top level -> non-zero exit
-        # Or: agent_framework missing -> RuntimeError raised -> non-zero exit
-        assert result.returncode != 0
-        assert "agent_framework" in result.stderr or "ImportError" in result.stderr
+
+        assert result.returncode != 0, f"expected failure, got 0. stderr={result.stderr!r}"
+        assert "agent_framework is required" in result.stderr

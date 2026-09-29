@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import asyncio
-import sys
 import os
+import sys
 from pathlib import Path
 
 # Add root directory to sys.path
@@ -24,30 +24,32 @@ CLIENTS = {
     "192.168.99.102": "Hadi",
     "192.168.99.113": "AgusB8",
     "192.168.99.105": "Doblay_Ori",
-    "192.168.99.107": "Surya"
+    "192.168.99.107": "Surya",
 }
 
 PORTS = [80, 81, 82, 8080, 8081, 8082, 443, 22, 23, 7547, 8291]
 
+
 async def check_port_through_tunnel(conn, ip: str, port: int) -> bool:
     """Try to open a TCP connection to destination via the MikroTik SSH connection."""
     try:
-        reader, writer = await asyncio.wait_for(
-            conn.open_connection(ip, port),
-            timeout=3.0
-        )
+        reader, writer = await asyncio.wait_for(conn.open_connection(ip, port), timeout=3.0)
         writer.close()
         await writer.wait_closed()
         return True
     except Exception:
         return False
 
+
 async def main():
     import asyncssh
+
     settings = get_settings()
     settings["ssh_port"] = int(os.getenv("MIKROTIK_SSH_PORT", "22"))
-    
-    print(f"Connecting to MikroTik at {settings['host']}:{settings['ssh_port']} to establish SSH tunnel...")
+
+    print(
+        f"Connecting to MikroTik at {settings['host']}:{settings['ssh_port']} to establish SSH tunnel..."
+    )
     async with asyncssh.connect(
         settings["host"],
         port=settings["ssh_port"],
@@ -60,26 +62,27 @@ async def main():
         print("-" * 60)
         print(f"{'Client Name':<15} | {'IP Address':<15} | {'Open Ports'}")
         print("-" * 60)
-        
+
         tasks = []
         for ip, name in CLIENTS.items():
             for port in PORTS:
                 tasks.append((name, ip, port))
-                
-        results = await asyncio.gather(*(
-            check_port_through_tunnel(conn, ip, port) for name, ip, port in tasks
-        ))
-        
+
+        results = await asyncio.gather(
+            *(check_port_through_tunnel(conn, ip, port) for name, ip, port in tasks)
+        )
+
         # Group results by client
         client_ports = {ip: [] for ip in CLIENTS}
         for (name, ip, port), open_status in zip(tasks, results):
             if open_status:
                 client_ports[ip].append(port)
-                
+
         for ip, name in CLIENTS.items():
             open_list = [str(p) for p in client_ports[ip]]
             open_str = ", ".join(open_list) if open_list else "Closed (Blocked/Disabled)"
             print(f"{name:<15} | {ip:<15} | {open_str}")
-            
+
+
 if __name__ == "__main__":
     asyncio.run(main())

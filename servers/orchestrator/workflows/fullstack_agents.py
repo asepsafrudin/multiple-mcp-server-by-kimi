@@ -1,12 +1,14 @@
-from smolagents import ToolCallingAgent, CodeAgent, HfApiModel
 from textwrap import dedent
+
+from smolagents import CodeAgent, HfApiModel, ToolCallingAgent
 
 # We simulate the MCP suite tool bindings by string arrays for now
 # which mapping will be mapped to actual smolagents.Tool instances in the runner.
 # E.g. mcp_shell_tool, mcp_fs_tool, etc.
 
-# BaseModel for consistent routing 
-model = HfApiModel("Qwen/Qwen2.5-Coder-32B-Instruct") 
+# BaseModel for consistent routing
+model = HfApiModel("Qwen/Qwen2.5-Coder-32B-Instruct")
+
 
 def create_architect_agent() -> ToolCallingAgent:
     prompt = dedent("""
@@ -22,14 +24,15 @@ def create_architect_agent() -> ToolCallingAgent:
         Satu ringkasan teknis (Blueprint) padat berisi struktur folder, komponen UI utama, dan endpoint.
         Ingat, jangan membuat business logic dulu, berikan hanya spesifikasi!
     """)
-    
+
     return ToolCallingAgent(
         tools=[],  # Diisi hook MCP Tool 'knowledge:search', 'memory:recall' di saat init Orkesrator
         model=model,
         system_prompt=prompt,
         name="Architect_Agent",
-        description="Merancang Blueprint dan arsitektur data."
+        description="Merancang Blueprint dan arsitektur data.",
     )
+
 
 def create_backend_agent() -> CodeAgent:
     prompt = dedent("""
@@ -50,8 +53,9 @@ def create_backend_agent() -> CodeAgent:
         model=model,
         system_prompt=prompt,
         name="Backend_Agent",
-        description="Menulis dan mengeksekusi script Backend API."
+        description="Menulis dan mengeksekusi script Backend API.",
     )
+
 
 def create_frontend_agent() -> CodeAgent:
     prompt = dedent("""
@@ -69,8 +73,9 @@ def create_frontend_agent() -> CodeAgent:
         model=model,
         system_prompt=prompt,
         name="Frontend_Agent",
-        description="Membuat komponen UI dan mockups."
+        description="Membuat komponen UI dan mockups.",
     )
+
 
 def create_qa_agent() -> ToolCallingAgent:
     prompt = dedent("""
@@ -85,20 +90,21 @@ def create_qa_agent() -> ToolCallingAgent:
            Lesson Learned, dan berikan balasan detail error untuk mengembalikan state ke Backend/Frontend.
         4. Jika SUKSES: Tandai DONE dan simpan log kesuksesan via `memory:store`.
     """)
-    
+
     return ToolCallingAgent(
         tools=[],  # Diisi khusus 'core:shell', 'memory:store'
         model=model,
         system_prompt=prompt,
         name="QA_Agent",
-        description="Sandbox terminal executor dan penguji keandalan aplikasi."
+        description="Sandbox terminal executor dan penguji keandalan aplikasi.",
     )
+
 
 # --- SemIf (Decision Layer / Validation Gate) ---
 def semif_validation_gate(blueprint: str) -> bool:
     """
     Validation Gate untuk RAG Poisoning.
-    Di sini SemIf (biasanya dipandu Qwen3-0.6B lokal) memeriksa apakah spesifikasi 
+    Di sini SemIf (biasanya dipandu Qwen3-0.6B lokal) memeriksa apakah spesifikasi
     Architect relevan dan realistis. Jika melantur (Poisoning), di-return False.
     """
     # Placeholder logic

@@ -36,7 +36,7 @@ def _validate_command(command: str, regex_whitelist: list[str] | None = None) ->
                     return shlex.split(command)
                 except ValueError as exc:
                     raise ValueError(f"Invalid command string: {exc}") from exc
-        
+
         # Jika ada regex tapi tidak ada yang match, kita tolak langsung
         raise ValueError("Command did not match any allowed regex patterns for this agent.")
 

@@ -2,11 +2,26 @@
 
 ROOT := $(shell pwd)
 VENV := $(ROOT)/.venv
+
+# Prefer the project-local virtualenv on developer machines, but fall back to
+# the ambient interpreter/tools so `make test` and `make lint` also work in CI,
+# where dependencies are installed into the runner's Python (see
+# .github/workflows/ci.yml). Without this fallback CI died with:
+#   make: .venv/bin/python: No such file or directory
+ifeq ($(wildcard $(VENV)/bin/python),)
+PYTHON := python3
+PIP := python3 -m pip
+RUFF := ruff
+PYTEST := python3 -m pytest
+else
 PYTHON := $(VENV)/bin/python
 PIP := $(VENV)/bin/pip
+RUFF := $(VENV)/bin/ruff
+PYTEST := $(VENV)/bin/python -m pytest
+endif
 
 install:
-	python3.12 -m venv $(VENV) || true
+	python3 -m venv $(VENV) || true
 	$(PIP) install --upgrade pip
 	$(PIP) install -e ".[dev]"
 
@@ -14,15 +29,15 @@ dev:
 	$(PIP) install -e ".[dev]"
 
 test:
-	$(PYTHON) -m pytest tests/ -v
+	$(PYTEST) tests/ -v
 
 lint:
-	$(VENV)/bin/ruff check shared servers tests scripts
-	$(VENV)/bin/ruff format --check shared servers tests scripts
+	$(RUFF) check shared servers tests scripts
+	$(RUFF) format --check shared servers tests scripts
 
 format:
-	$(VENV)/bin/ruff check --fix shared servers tests scripts
-	$(VENV)/bin/ruff format shared servers tests scripts
+	$(RUFF) check --fix shared servers tests scripts
+	$(RUFF) format shared servers tests scripts
 
 clean:
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true

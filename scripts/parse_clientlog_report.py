@@ -4,6 +4,7 @@
 Usage: python scripts/parse_clientlog_report.py <clientlog.jsonl> [window_start "YYYY-MM-DD HH:MM:SS"] [out.md]
 window_start opsional: entri SEBELUM waktu ini dianggap baseline (di luar window).
 """
+
 import json
 import re
 import sys
@@ -12,8 +13,11 @@ from pathlib import Path
 
 JSONL = Path(sys.argv[1])
 WINDOW_START = sys.argv[2] if len(sys.argv) > 2 else ""
-OUT = Path(sys.argv[3]) if len(sys.argv) > 3 else JSONL.with_name(
-    JSONL.name.replace("_raw_", "_report_").replace(".jsonl", ".md"))
+OUT = (
+    Path(sys.argv[3])
+    if len(sys.argv) > 3
+    else JSONL.with_name(JSONL.name.replace("_raw_", "_report_").replace(".jsonl", ".md"))
+)
 
 
 def fmt_bytes(n: float) -> str:
@@ -58,8 +62,18 @@ def main() -> None:
             continue
         m = rx_logout.search(msg)
         if m and "pppoe" in topics:
-            logouts.append((t, m.group(1), int(m.group(2)), int(m.group(3)),
-                            int(m.group(4)), int(m.group(5)), int(m.group(6)), m.group(7)))
+            logouts.append(
+                (
+                    t,
+                    m.group(1),
+                    int(m.group(2)),
+                    int(m.group(3)),
+                    int(m.group(4)),
+                    int(m.group(5)),
+                    int(m.group(6)),
+                    m.group(7),
+                )
+            )
             continue
         if "error" in topics or "critical" in topics or "warning" in topics:
             errors.append((t, topics, msg))
@@ -85,7 +99,9 @@ def main() -> None:
     L.append(f"| **Window penangkapan** | {WINDOW_START} WIB s/d selesai (20 menit) |")
     L.append("| **Metode** | Polling `/rest/log` tiap 15 dtk (tanpa mengubah konfigurasi router) |")
     L.append(f"| **Entri baru dalam window** | {len(win)} |")
-    L.append(f"| **Sesi PPP aktif (awal → akhir)** | {len(snap_start['sessions']) if snap_start else '?'} → {len(snap_end['sessions']) if snap_end else '?'} |")
+    L.append(
+        f"| **Sesi PPP aktif (awal → akhir)** | {len(snap_start['sessions']) if snap_start else '?'} → {len(snap_end['sessions']) if snap_end else '?'} |"
+    )
     L.append(f"| **File data mentah** | `{JSONL.name}` |")
     L.append("")
     L.append("---")
@@ -106,7 +122,9 @@ def main() -> None:
         L.append("| Waktu | User | Durasi Sesi | RX (download) | TX (upload) | MAC |")
         L.append("|---|---|---|---|---|---|")
         for t, u, dur, rxb, txb, rxp, txp, mac in logouts:
-            L.append(f"| {t} | `{u}` | {fmt_dur(dur)} | {fmt_bytes(rxb)} | {fmt_bytes(txb)} | `{mac}` |")
+            L.append(
+                f"| {t} | `{u}` | {fmt_dur(dur)} | {fmt_bytes(rxb)} | {fmt_bytes(txb)} | `{mac}` |"
+            )
         L.append("")
     if not logins and not logouts:
         L.append("- 😴 **Tidak ada klien yang login/logout selama 20 menit** — semua sesi stabil.")
@@ -116,8 +134,12 @@ def main() -> None:
         L.append("")
         L.append("| User | Sesi | Total Durasi | Total RX | Total TX |")
         L.append("|---|---|---|---|---|")
-        for u, c in sorted(per_client.items(), key=lambda kv: kv[1]["rx"] + kv[1]["tx"], reverse=True):
-            L.append(f"| `{u}` | {c['sessions']} | {fmt_dur(c['dur'])} | {fmt_bytes(c['rx'])} | {fmt_bytes(c['tx'])} |")
+        for u, c in sorted(
+            per_client.items(), key=lambda kv: kv[1]["rx"] + kv[1]["tx"], reverse=True
+        ):
+            L.append(
+                f"| `{u}` | {c['sessions']} | {fmt_dur(c['dur'])} | {fmt_bytes(c['rx'])} | {fmt_bytes(c['tx'])} |"
+            )
         L.append("")
     L.append("---")
     L.append("")
@@ -153,7 +175,9 @@ def main() -> None:
         for t, msg in admin:
             L.append(f"| {t} | {msg} |")
         L.append("")
-        L.append("> Catatan: event login/logout `rest-api`/`api` berasal dari proses monitoring itu sendiri.")
+        L.append(
+            "> Catatan: event login/logout `rest-api`/`api` berasal dari proses monitoring itu sendiri."
+        )
     else:
         L.append("- Tidak ada aktivitas admin.")
     L.append("")
@@ -165,16 +189,22 @@ def main() -> None:
         L.append("| User | IP | Uptime |")
         L.append("|---|---|---|")
         for s in sorted(snap_end["sessions"], key=lambda x: x.get("name", "")):
-            L.append(f"| `{s.get('name','?')}` | {s.get('address','?')} | {s.get('uptime','?')} |")
+            L.append(
+                f"| `{s.get('name', '?')}` | {s.get('address', '?')} | {s.get('uptime', '?')} |"
+            )
     L.append("")
     L.append("---")
     L.append("")
-    L.append(f"*Baseline pra-window: {len(base)} entri (±13 jam terakhir) juga tersimpan di file JSONL yang sama.*")
+    L.append(
+        f"*Baseline pra-window: {len(base)} entri (±13 jam terakhir) juga tersimpan di file JSONL yang sama.*"
+    )
 
     OUT.write_text("\n".join(L) + "\n")
     print(f"OK -> {OUT}")
-    print(f"window_entries={len(win)} logins={len(logins)} logouts={len(logouts)} "
-          f"links={len(links)} errors={len(errors)} admin={len(admin)}")
+    print(
+        f"window_entries={len(win)} logins={len(logins)} logouts={len(logouts)} "
+        f"links={len(links)} errors={len(errors)} admin={len(admin)}"
+    )
 
 
 if __name__ == "__main__":

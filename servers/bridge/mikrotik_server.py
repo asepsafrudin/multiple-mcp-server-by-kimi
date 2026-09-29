@@ -138,9 +138,7 @@ async def _rest_request(
         timeout=30.0,
         verify=final_tls_verify,
     ) as client:
-        response = await client.request(
-            method.upper(), url, params=params, json=json_body
-        )
+        response = await client.request(method.upper(), url, params=params, json=json_body)
         response.raise_for_status()
         data = None
         if response.content:
@@ -422,14 +420,12 @@ async def _run_ssh(
             "detail": str(exc),
         }
 
-    final_host, _, _, final_user, final_password, _, final_ssh_port = (
-        _get_connection_info(
-            router=router,
-            router_host=router_host,
-            router_user=router_user,
-            router_password=router_password,
-            router_ssh_port=router_ssh_port,
-        )
+    final_host, _, _, final_user, final_password, _, final_ssh_port = _get_connection_info(
+        router=router,
+        router_host=router_host,
+        router_user=router_user,
+        router_password=router_password,
+        router_ssh_port=router_ssh_port,
     )
 
     try:

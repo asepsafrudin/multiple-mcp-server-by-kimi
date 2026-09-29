@@ -3,6 +3,7 @@
 
 Usage: analyze_log_window.py <clientlog.jsonl> "YYYY-MM-DD HH:MM:SS" "YYYY-MM-DD HH:MM:SS" [out.md]
 """
+
 import json
 import re
 import sys
@@ -12,8 +13,13 @@ from pathlib import Path
 JSONL = Path(sys.argv[1])
 START = sys.argv[2]
 END = sys.argv[3]
-OUT = Path(sys.argv[4]) if len(sys.argv) > 4 else JSONL.with_name(
-    f"{JSONL.stem}_window_{START[11:13]}{START[14:16]}-{END[11:13]}{END[14:16]}.md")
+OUT = (
+    Path(sys.argv[4])
+    if len(sys.argv) > 4
+    else JSONL.with_name(
+        f"{JSONL.stem}_window_{START[11:13]}{START[14:16]}-{END[11:13]}{END[14:16]}.md"
+    )
+)
 
 
 def fmt_bytes(n: float) -> str:
@@ -53,8 +59,18 @@ def main() -> None:
             continue
         m = rx_logout.search(msg)
         if m and "pppoe" in topics:
-            logouts.append((t, m.group(1), int(m.group(2)), int(m.group(3)),
-                            int(m.group(4)), int(m.group(5)), int(m.group(6)), m.group(7)))
+            logouts.append(
+                (
+                    t,
+                    m.group(1),
+                    int(m.group(2)),
+                    int(m.group(3)),
+                    int(m.group(4)),
+                    int(m.group(5)),
+                    int(m.group(6)),
+                    m.group(7),
+                )
+            )
             continue
         if "error" in topics or "critical" in topics or "warning" in topics:
             errors.append((t, topics, msg))
@@ -110,7 +126,9 @@ def main() -> None:
         L.append("| Waktu | User | Durasi Sesi | RX (download) | TX (upload) | MAC |")
         L.append("|---|---|---|---|---|---|")
         for t, u, dur, rxb, txb, rxp, txp, mac in logouts:
-            L.append(f"| {t[11:]} | `{u}` | {fmt_dur(dur)} | {fmt_bytes(rxb)} | {fmt_bytes(txb)} | `{mac}` |")
+            L.append(
+                f"| {t[11:]} | `{u}` | {fmt_dur(dur)} | {fmt_bytes(rxb)} | {fmt_bytes(txb)} | `{mac}` |"
+            )
     else:
         L.append("- Tidak ada logout.")
     L.append("")
@@ -119,8 +137,12 @@ def main() -> None:
         L.append("")
         L.append("| User | Sesi | Total Durasi | Total RX | Total TX |")
         L.append("|---|---|---|---|---|")
-        for u, c in sorted(per_client.items(), key=lambda kv: kv[1]["rx"] + kv[1]["tx"], reverse=True):
-            L.append(f"| `{u}` | {c['sessions']} | {fmt_dur(c['dur'])} | {fmt_bytes(c['rx'])} | {fmt_bytes(c['tx'])} |")
+        for u, c in sorted(
+            per_client.items(), key=lambda kv: kv[1]["rx"] + kv[1]["tx"], reverse=True
+        ):
+            L.append(
+                f"| `{u}` | {c['sessions']} | {fmt_dur(c['dur'])} | {fmt_bytes(c['rx'])} | {fmt_bytes(c['tx'])} |"
+            )
         L.append("")
     L.append("---")
     L.append("")
@@ -128,8 +150,10 @@ def main() -> None:
     L.append("")
     if links:
         if flap:
-            L.append("**Frekuensi per interface:** " +
-                     ", ".join(f"`{k}` {v}×" for k, v in sorted(flap.items(), key=lambda x: -x[1])))
+            L.append(
+                "**Frekuensi per interface:** "
+                + ", ".join(f"`{k}` {v}×" for k, v in sorted(flap.items(), key=lambda x: -x[1]))
+            )
             L.append("")
         L.append("| Waktu | Pesan |")
         L.append("|---|---|")
@@ -170,8 +194,10 @@ def main() -> None:
 
     OUT.write_text("\n".join(L) + "\n")
     print(f"OK -> {OUT}")
-    print(f"entries={len(entries)} logins={len(logins)} logouts={len(logouts)} "
-          f"links={len(links)} errors={len(errors)} admin={len(admin)} other={len(other)}")
+    print(
+        f"entries={len(entries)} logins={len(logins)} logouts={len(logouts)} "
+        f"links={len(links)} errors={len(errors)} admin={len(admin)} other={len(other)}"
+    )
 
 
 if __name__ == "__main__":

@@ -55,9 +55,7 @@ class Settings(BaseSettings):
     # GOOGLE_VISION_KEY_PATH names (both are service-account JSON).
     google_vision_credentials_path: Path | None = Field(
         default=None,
-        validation_alias=AliasChoices(
-            "GOOGLE_VISION_CREDENTIALS_PATH", "GOOGLE_VISION_KEY_PATH"
-        ),
+        validation_alias=AliasChoices("GOOGLE_VISION_CREDENTIALS_PATH", "GOOGLE_VISION_KEY_PATH"),
     )
     gemini_api_key: str | None = None
     telegram_bot_token: str | None = None
@@ -82,7 +80,6 @@ class Settings(BaseSettings):
     mikrotik2_password: str | None = None
     mikrotik2_tls_verify: bool = False
     mikrotik2_ssh_port: int = 22
-
 
     # SQLite memory & knowledge (local-first default)
     memory_db_path: Path = Path("/home/aseps/MCP/data/memory_v2.db")

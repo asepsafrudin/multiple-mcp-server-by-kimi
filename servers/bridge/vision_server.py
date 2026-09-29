@@ -35,8 +35,8 @@ def _get_access_token() -> str:
     if not creds_path:
         raise RuntimeError("GOOGLE_VISION_CREDENTIALS_PATH not configured")
 
-    from google.oauth2 import service_account
     import google.auth.transport.requests
+    from google.oauth2 import service_account
 
     credentials = service_account.Credentials.from_service_account_file(
         str(creds_path),
@@ -51,14 +51,14 @@ async def _ollama_fallback_ocr(encoded_img: str) -> dict:
     """Fallback to local Ollama multimodal model."""
     settings = get_settings()
     ollama_url = f"{settings.ollama_url.rstrip('/')}/api/generate"
-    
+
     payload = {
         "model": "llama3.2-vision",
         "prompt": "Extract all readable text from this image as accurately as possible. Output only the extracted text without any conversational fillers. Preserve formatting where possible.",
         "images": [encoded_img],
-        "stream": False
+        "stream": False,
     }
-    
+
     logger.info("falling_back_to_ollama_vision", model="llama3.2-vision")
     async with httpx.AsyncClient(timeout=120.0) as client:
         response = await client.post(ollama_url, json=payload)
@@ -66,10 +66,10 @@ async def _ollama_fallback_ocr(encoded_img: str) -> dict:
             logger.warning("llama3.2-vision model not found, attempting moondream")
             payload["model"] = "moondream"
             response = await client.post(ollama_url, json=payload)
-            
+
         response.raise_for_status()
         data = response.json()
-        
+
     text = data.get("response", "").strip()
     return {"status": "ok", "text": text, "source": "ollama_" + payload["model"]}
 
@@ -84,12 +84,11 @@ async def vision_ocr(image_path: str) -> dict:
     try:
         image_bytes = path.read_bytes()
         encoded = base64.b64encode(image_bytes).decode("utf-8")
-    except Exception as exc: 
+    except Exception as exc:
         return {"status": "error", "error": f"Failed to read image: {exc}"}
 
     try:
         token = _get_access_token()
-
 
         url = "https://vision.googleapis.com/v1/images:annotate"
         payload = {
@@ -112,14 +111,22 @@ async def vision_ocr(image_path: str) -> dict:
 
         annotations = data["responses"][0].get("textAnnotations", [])
         text = annotations[0]["description"] if annotations else ""
-        return {"status": "ok", "text": text, "annotations": len(annotations), "source": "google_cloud_vision"}
+        return {
+            "status": "ok",
+            "text": text,
+            "annotations": len(annotations),
+            "source": "google_cloud_vision",
+        }
     except Exception as exc:  # noqa: BLE001
         logger.warning("vision_ocr_failed_attempting_fallback", error=str(exc))
         try:
             return await _ollama_fallback_ocr(encoded)
         except Exception as fallback_exc:
             logger.error("vision_ocr_fallback_failed", error=str(fallback_exc))
-            return {"status": "error", "error": f"Google Vision API failed: {exc} | Ollama Fallback failed: {fallback_exc}"}
+            return {
+                "status": "error",
+                "error": f"Google Vision API failed: {exc} | Ollama Fallback failed: {fallback_exc}",
+            }
 
 
 if __name__ == "__main__":

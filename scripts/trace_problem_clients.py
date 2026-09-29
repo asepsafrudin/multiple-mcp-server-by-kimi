@@ -6,6 +6,7 @@ Output: ranking masalah per klien + pemetaan MAC->port->user.
 Usage: python scripts/trace_problem_clients.py <clientlog.jsonl> [w0 w1] [out.md]
        w0/w1 = window fokus "YYYY-MM-DD HH:MM:SS" (opsional, untuk penanda event).
 """
+
 import json
 import re
 import sys
@@ -17,8 +18,9 @@ import mikrotik_throughput_monitor as mtm  # noqa: E402
 JSONL = Path(sys.argv[1])
 W0 = sys.argv[2] if len(sys.argv) > 3 else ""
 W1 = sys.argv[3] if len(sys.argv) > 3 else ""
-OUT = Path(sys.argv[4]) if len(sys.argv) > 4 else JSONL.with_name(
-    f"problem_clients_{JSONL.stem}.md")
+OUT = (
+    Path(sys.argv[4]) if len(sys.argv) > 4 else JSONL.with_name(f"problem_clients_{JSONL.stem}.md")
+)
 
 
 def main() -> None:
@@ -28,9 +30,17 @@ def main() -> None:
     rx_active = re.compile(r"user (\S+) is already active")
     rx_disc = re.compile(r"<pppoe-(\S+)>: (terminating|disconnected)")
 
-    users = defaultdict(lambda: {"login": 0, "logout": 0, "already": 0,
-                                 "disc": 0, "macs": set(), "events": [],
-                                 "in_win": 0})
+    users = defaultdict(
+        lambda: {
+            "login": 0,
+            "logout": 0,
+            "already": 0,
+            "disc": 0,
+            "macs": set(),
+            "events": [],
+            "in_win": 0,
+        }
+    )
     for line in JSONL.read_text().splitlines():
         e = json.loads(line)
         if "_snapshot" in e:
@@ -99,12 +109,16 @@ def main() -> None:
     L.append("")
     L.append("## 1. Ranking Klien (berdasarkan frekuensi putus-nyambung)")
     L.append("")
-    L.append("| User | Login | Logout | Disconnect | Err 'already active' | Event 19-21 | MAC (port fisik) | IP & uptime sesi kini |")
+    L.append(
+        "| User | Login | Logout | Disconnect | Err 'already active' | Event 19-21 | MAC (port fisik) | IP & uptime sesi kini |"
+    )
     L.append("|---|---|---|---|---|---|---|---|")
     for name, u in ranked:
         macs = ", ".join(f"`{m}`({mac_port.get(m, '?')})" for m in sorted(u["macs"])) or "-"
         ip, up = uptime_map.get(name, ("(offline)", "-"))
-        L.append(f"| `{name}` | {u['login']} | {u['logout']} | {u['disc']} | {u['already']} | {u['in_win']} | {macs} | {ip} / {up} |")
+        L.append(
+            f"| `{name}` | {u['login']} | {u['logout']} | {u['disc']} | {u['already']} | {u['in_win']} | {macs} | {ip} / {up} |"
+        )
     L.append("")
     L.append("## 2. Klien di belakang ether8 (terdampak flap 19:00–21:00)")
     L.append("")
@@ -124,11 +138,31 @@ def main() -> None:
     L.append("## 3. Detail ether8")
     L.append("")
     L.append("```json")
-    L.append(json.dumps({k: v for k, v in e8.items() if k in
-                         ("name", "status", "link-downs", "speed", "duplex",
-                          "auto-negotiation", "rx-crc-error", "rx-fcs-error",
-                          "rx-align-error", "rx-length-error", "tx-collision",
-                          "tx-excessive-collision", "tx-late-collision")}, indent=2))
+    L.append(
+        json.dumps(
+            {
+                k: v
+                for k, v in e8.items()
+                if k
+                in (
+                    "name",
+                    "status",
+                    "link-downs",
+                    "speed",
+                    "duplex",
+                    "auto-negotiation",
+                    "rx-crc-error",
+                    "rx-fcs-error",
+                    "rx-align-error",
+                    "rx-length-error",
+                    "tx-collision",
+                    "tx-excessive-collision",
+                    "tx-late-collision",
+                )
+            },
+            indent=2,
+        )
+    )
     L.append("```")
     L.append("")
     L.append("## 4. Kronologi event klien paling bermasalah")

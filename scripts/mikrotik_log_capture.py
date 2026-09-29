@@ -7,6 +7,7 @@ setelah DURATION_SEC detik.
 
 Usage: python scripts/mikrotik_log_capture.py [duration_min=20] [poll_sec=15]
 """
+
 import json
 import sys
 import time
@@ -43,9 +44,16 @@ def main() -> None:
         try:
             url = f"{settings['scheme']}://{settings['host']}:{settings['port']}/rest/ppp/active"
             act = client.get(url).json()
-            fj.write(json.dumps({"_snapshot": "ppp_active_start",
-                                 "time": f"{datetime.now():%Y-%m-%d %H:%M:%S}",
-                                 "sessions": act}) + "\n")
+            fj.write(
+                json.dumps(
+                    {
+                        "_snapshot": "ppp_active_start",
+                        "time": f"{datetime.now():%Y-%m-%d %H:%M:%S}",
+                        "sessions": act,
+                    }
+                )
+                + "\n"
+            )
             print(f"snapshot awal: {len(act)} sesi ppp aktif", flush=True)
         except Exception as e:
             print(f"snapshot awal gagal: {e}", flush=True)
@@ -67,7 +75,10 @@ def main() -> None:
                 fj.flush()
                 ft.flush()
                 total += len(new)
-                print(f"poll {poll:3d} {datetime.now():%H:%M:%S}: +{len(new)} baru (total {total})", flush=True)
+                print(
+                    f"poll {poll:3d} {datetime.now():%H:%M:%S}: +{len(new)} baru (total {total})",
+                    flush=True,
+                )
             except Exception as e:
                 errors += 1
                 print(f"poll {poll:3d} ERROR #{errors}: {e}", flush=True)
@@ -82,14 +93,23 @@ def main() -> None:
         try:
             url = f"{settings['scheme']}://{settings['host']}:{settings['port']}/rest/ppp/active"
             act = client.get(url).json()
-            fj.write(json.dumps({"_snapshot": "ppp_active_end",
-                                 "time": f"{datetime.now():%Y-%m-%d %H:%M:%S}",
-                                 "sessions": act}) + "\n")
+            fj.write(
+                json.dumps(
+                    {
+                        "_snapshot": "ppp_active_end",
+                        "time": f"{datetime.now():%Y-%m-%d %H:%M:%S}",
+                        "sessions": act,
+                    }
+                )
+                + "\n"
+            )
             print(f"snapshot akhir: {len(act)} sesi ppp aktif", flush=True)
         except Exception as e:
             print(f"snapshot akhir gagal: {e}", flush=True)
 
-    print(f"DONE {datetime.now():%Y-%m-%d %H:%M:%S} total={total} entri, errors={errors}", flush=True)
+    print(
+        f"DONE {datetime.now():%Y-%m-%d %H:%M:%S} total={total} entri, errors={errors}", flush=True
+    )
     client.close()
 
 

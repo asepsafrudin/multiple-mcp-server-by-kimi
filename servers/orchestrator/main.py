@@ -21,6 +21,9 @@ from __future__ import annotations
 import asyncio
 import os
 import sys
+from urllib.parse import urlparse
+
+DEFAULT_BASE_URL = "http://localhost:11434/v1"
 
 
 def _maybe_mock_dependencies() -> tuple[type, type, type]:
@@ -91,7 +94,7 @@ def _maybe_mock_dependencies() -> tuple[type, type, type]:
         raise RuntimeError(
             "agent_framework is required but not installed.\n"
             "Install with one of:\n"
-            "  pip install -e \".[agents]\"   (uses pyproject.toml extras)\n"
+            '  pip install -e ".[agents]"   (uses pyproject.toml extras)\n'
             "  pip install agent-framework\n"
             f"Original ImportError: {exc}\n"
             "If you intentionally want the legacy silent mock for local dev, "
@@ -103,11 +106,38 @@ def _maybe_mock_dependencies() -> tuple[type, type, type]:
 Agent, MCPStreamableHTTPTool, OpenAIChatClient = _maybe_mock_dependencies()
 
 
-def preflight_check() -> None:
-    """Verify all required environment variables are set before server start.
+def _resolve_base_url() -> str:
+    """Return a validated OPENAI_BASE_URL.
+
+    Returns:
+        The configured base URL, or DEFAULT_BASE_URL when unset.
 
     Raises:
-        RuntimeError: if any required environment variable is missing.
+        RuntimeError: if the configured value is not a well-formed http(s) URL.
+    """
+    base_url = os.environ.get("OPENAI_BASE_URL", DEFAULT_BASE_URL)
+    parsed = urlparse(base_url)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        raise RuntimeError(
+            "Orchestrator preflight failed: OPENAI_BASE_URL is not a valid URL.\n"
+            f"  got: {base_url!r}\n"
+            "  expected e.g. http://localhost:11434/v1 (Ollama) or "
+            "https://api.openai.com/v1\n"
+            "Copy .env.example to .env and set a valid value, then retry."
+        )
+    return base_url
+
+
+def preflight_check() -> None:
+    """Validate required environment variables before the server starts.
+
+    Checks performed:
+      * ``OPENAI_BASE_URL`` must be a well-formed ``http(s)`` URL.
+      * ``OPENAI_API_KEY`` must be set, unless a local Ollama base URL is in
+        use — in which case a placeholder is injected automatically.
+
+    Raises:
+        RuntimeError: if a required environment variable is missing or invalid.
     """
     required: dict[str, str] = {
         # Ollama default is acceptable for local dev. For hosted providers,
@@ -118,8 +148,11 @@ def preflight_check() -> None:
         ),
     }
 
+    # Validate OPENAI_BASE_URL up-front so a typo fails at startup rather than
+    # surfacing later as an opaque connection error on the first LLM call.
+    base_url = _resolve_base_url()
+
     # If using Ollama locally, OPENAI_API_KEY is not strictly required.
-    base_url = os.environ.get("OPENAI_BASE_URL", "http://localhost:11434/v1")
     if "localhost:11434" in base_url or "127.0.0.1:11434" in base_url:
         # Local Ollama — API key may be any non-empty placeholder.
         if not os.environ.get("OPENAI_API_KEY"):
@@ -163,7 +196,7 @@ async def run_maf_server() -> None:
     agent = Agent(
         client=OpenAIChatClient(
             model=os.environ.get("ORCHESTRATOR_MODEL", "llama3.2"),
-            base_url=os.environ.get("OPENAI_BASE_URL", "http://localhost:11434/v1"),
+            base_url=_resolve_base_url(),
             api_key=os.environ["OPENAI_API_KEY"],
         ),
         name="MAF_Orchestrator",

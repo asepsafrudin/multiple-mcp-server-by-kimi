@@ -9,6 +9,7 @@ laporan tetap kompatibel.
 
 Usage: python scripts/mikrotik_resilient_monitor.py [interval] [count]
 """
+
 import sys
 import time
 from datetime import datetime
@@ -44,11 +45,13 @@ def main() -> None:
                 p = prev.get(name, {})
                 rx_rate = (
                     (rx_new - mtm._to_int(p.get("rx-byte", p.get("bytes", 0)))) / interval
-                    if p else None
+                    if p
+                    else None
                 )
                 tx_rate = (
                     (tx_new - mtm._to_int(p.get("tx-byte", p.get("tx-byte", 0)))) / interval
-                    if p else None
+                    if p
+                    else None
                 )
                 mtm.print_interface_stats(ts, iface, rx_rate, tx_rate)
                 prev[name] = iface

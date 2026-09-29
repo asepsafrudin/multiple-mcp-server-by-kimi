@@ -73,28 +73,25 @@ async def test_mikrotik_get_identity_no_host(monkeypatch, reset_settings) -> Non
     assert "MIKROTIK_HOST" in res["error"]
 
 
-async def test_mikrotik_get_identity(
-    monkeypatch, reset_settings, fake_client
-) -> None:
+async def test_mikrotik_get_identity(monkeypatch, reset_settings, fake_client) -> None:
     _set_creds(monkeypatch, reset_settings)
     res = await mikrotik_server.mikrotik_get_identity()
     assert res["status"] == "ok"
     assert res["data"]["version"] == "7.13"
     assert res["path"] == "system/identity"
     assert (
-        fake_client.instances[0].calls[0]["url"]
-        == "https://192.168.88.1:443/rest/system/identity"
+        fake_client.instances[0].calls[0]["url"] == "https://192.168.88.1:443/rest/system/identity"
     )
 
 
-async def test_mikrotik_get_system_resource(
-    monkeypatch, reset_settings, fake_client
-) -> None:
+async def test_mikrotik_get_system_resource(monkeypatch, reset_settings, fake_client) -> None:
     _set_creds(monkeypatch, reset_settings)
     res = await mikrotik_server.mikrotik_get_system_resource()
     assert res["status"] == "ok"
     assert res["data"]["version"] == "7.13"
-    assert fake_client.instances[0].calls[0]["url"] == "https://192.168.88.1:443/rest/system/resource"
+    assert (
+        fake_client.instances[0].calls[0]["url"] == "https://192.168.88.1:443/rest/system/resource"
+    )
 
 
 async def test_mikrotik_run_rest_put(monkeypatch, reset_settings, fake_client) -> None:
@@ -162,9 +159,7 @@ def fake_ssh(monkeypatch: pytest.MonkeyPatch):
     return connect_args
 
 
-async def test_mikrotik_ssh_command(
-    monkeypatch, reset_settings, fake_ssh
-) -> None:
+async def test_mikrotik_ssh_command(monkeypatch, reset_settings, fake_ssh) -> None:
     _set_creds(monkeypatch, reset_settings)
     res = await mikrotik_server.mikrotik_ssh_command("/system identity print")
     assert res["status"] == "ok"
@@ -172,9 +167,7 @@ async def test_mikrotik_ssh_command(
     assert fake_ssh["kwargs"]["username"] == "admin"
 
 
-async def test_mikrotik_export_config(
-    monkeypatch, reset_settings, fake_ssh
-) -> None:
+async def test_mikrotik_export_config(monkeypatch, reset_settings, fake_ssh) -> None:
     _set_creds(monkeypatch, reset_settings)
     res = await mikrotik_server.mikrotik_export_config()
     assert res["status"] == "ok"
@@ -199,8 +192,7 @@ async def test_mikrotik_router2_and_overrides(
     res = await mikrotik_server.mikrotik_get_identity(router="router2")
     assert res["status"] == "ok"
     assert (
-        fake_client.instances[0].calls[0]["url"]
-        == "https://192.168.22.1:8443/rest/system/identity"
+        fake_client.instances[0].calls[0]["url"] == "https://192.168.22.1:8443/rest/system/identity"
     )
 
     # 2. Test REST with dynamic override
@@ -209,8 +201,7 @@ async def test_mikrotik_router2_and_overrides(
     )
     assert res["status"] == "ok"
     assert (
-        fake_client.instances[1].calls[0]["url"]
-        == "https://192.168.100.1:443/rest/system/identity"
+        fake_client.instances[1].calls[0]["url"] == "https://192.168.100.1:443/rest/system/identity"
     )
 
     # 3. Test SSH on router 2

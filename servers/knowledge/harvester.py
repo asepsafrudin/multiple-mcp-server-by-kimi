@@ -136,6 +136,7 @@ def _read_text(path: Path, max_bytes: int = 2 * 1024 * 1024) -> str | None:
         if path.suffix.lower() == ".pdf":
             try:
                 from servers.document.server import document_extract_text
+
                 logger.info("routing_pdf_to_document_server", path=str(path))
                 result = document_extract_text(str(path))
                 if result.get("status") == "ok":

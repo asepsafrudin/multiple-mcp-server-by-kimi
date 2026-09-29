@@ -60,6 +60,16 @@ extend-select = ["I"]  # isort
 # TODO TASK-148: gradual ramp to stricter rules
 # extend-select = ["I", "UP", "B", "SIM", "RUF"]
 
+[tool.ruff.lint.per-file-ignores]
+# Server/script entry points deliberately prepend the repo root to sys.path
+# before importing project modules, so they also work when executed directly:
+#   python servers/memory/server.py
+# Ruff reports those imports as E402 (module-import-not-at-top-of-file).
+# TODO TASK-148: replace the sys.path hacks with a properly installed package,
+# then delete this block.
+"servers/**/*server.py" = ["E402"]
+"scripts/*.py" = ["E402"]
+
 [tool.mypy]
 python_version = "3.12"
 strict = true

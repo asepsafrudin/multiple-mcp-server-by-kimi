@@ -3,6 +3,7 @@
 
 Usage: python scripts/parse_throughput_report.py <raw_log.txt> [out.md]
 """
+
 import re
 import sys
 from collections import defaultdict
@@ -10,8 +11,11 @@ from datetime import datetime
 from pathlib import Path
 
 LOG = Path(sys.argv[1])
-OUT = Path(sys.argv[2]) if len(sys.argv) > 2 else LOG.with_name(
-    LOG.name.replace("_raw_", "_report_").replace(".txt", ".md"))
+OUT = (
+    Path(sys.argv[2])
+    if len(sys.argv) > 2
+    else LOG.with_name(LOG.name.replace("_raw_", "_report_").replace(".txt", ".md"))
+)
 
 UNITS = {"B": 1, "KB": 1024, "MB": 1024**2, "GB": 1024**3, "TB": 1024**4}
 
@@ -78,16 +82,20 @@ def main() -> None:
         d_rx = last_rx[name] - first_rx[name]
         d_tx = last_tx[name] - first_tx[name]
         rxs, txs = rx_rates.get(name, []), tx_rates.get(name, [])
-        rows.append({
-            "name": name, "d_rx": d_rx, "d_tx": d_tx,
-            "rx_avg": sum(rxs) / len(rxs) if rxs else 0.0,
-            "rx_max": max(rxs) if rxs else 0.0,
-            "tx_avg": sum(txs) / len(txs) if txs else 0.0,
-            "tx_max": max(txs) if txs else 0.0,
-            "rx_pkts": last_pkt[name][0] - first_pkt[name][0],
-            "tx_pkts": last_pkt[name][1] - first_pkt[name][1],
-            "active": (d_rx + d_tx) > 0,
-        })
+        rows.append(
+            {
+                "name": name,
+                "d_rx": d_rx,
+                "d_tx": d_tx,
+                "rx_avg": sum(rxs) / len(rxs) if rxs else 0.0,
+                "rx_max": max(rxs) if rxs else 0.0,
+                "tx_avg": sum(txs) / len(txs) if txs else 0.0,
+                "tx_max": max(txs) if txs else 0.0,
+                "rx_pkts": last_pkt[name][0] - first_pkt[name][0],
+                "tx_pkts": last_pkt[name][1] - first_pkt[name][1],
+                "active": (d_rx + d_tx) > 0,
+            }
+        )
 
     active = [r for r in rows if r["active"]]
     idle = [r for r in rows if not r["active"]]
@@ -106,7 +114,7 @@ def main() -> None:
     L.append(f"| **Router** | `{host}` |")
     L.append(f"| **Waktu mulai** | {t0:%Y-%m-%d %H:%M:%S} WIB |")
     L.append(f"| **Waktu selesai** | {t1:%Y-%m-%d %H:%M:%S} WIB |")
-    L.append(f"| **Durasi monitoring** | {int(dur)} detik (~{dur/60:.1f} menit) |")
+    L.append(f"| **Durasi monitoring** | {int(dur)} detik (~{dur / 60:.1f} menit) |")
     L.append(f"| **Interval sampling** | {meta.group(2)} detik |")
     L.append(f"| **Jumlah iterasi** | {n_iter} sampel |")
     L.append(f"| **Interface termonitor** | {len(rows)} ({len(active)} aktif, {len(idle)} idle) |")
@@ -116,10 +124,14 @@ def main() -> None:
     L.append("")
     L.append("## 1. Ringkasan Eksekutif")
     L.append("")
-    L.append(f"- **Total trafik interface fisik/non-PPPoE selama window**: RX **{fmt(tot_rx)}**, TX **{fmt(tot_tx)}**")
+    L.append(
+        f"- **Total trafik interface fisik/non-PPPoE selama window**: RX **{fmt(tot_rx)}**, TX **{fmt(tot_tx)}**"
+    )
     if phys:
         busiest = max(phys, key=lambda r: r["rx_avg"])
-        L.append(f"- **Interface tersibuk (rata-rata RX)**: `{busiest['name']}` — {fmt(busiest['rx_avg'])}/s RX, {fmt(busiest['tx_avg'])}/s TX")
+        L.append(
+            f"- **Interface tersibuk (rata-rata RX)**: `{busiest['name']}` — {fmt(busiest['rx_avg'])}/s RX, {fmt(busiest['tx_avg'])}/s TX"
+        )
     pppoe_active = [r for r in pppoe if r["active"]]
     L.append(f"- **Klien PPPoE aktif**: {len(pppoe_active)} dari {len(pppoe)} sesi terpantau")
     if idle:
@@ -133,9 +145,11 @@ def main() -> None:
     L.append("| Interface | RX Total | TX Total | RX Avg | RX Max | TX Avg | TX Max |")
     L.append("|---|---|---|---|---|---|---|")
     for r in sorted(phys, key=lambda x: x["d_rx"] + x["d_tx"], reverse=True):
-        L.append(f"| `{r['name']}` | {fmt(r['d_rx'])} | {fmt(r['d_tx'])} | "
-                 f"{fmt(r['rx_avg'])}/s | {fmt(r['rx_max'])}/s | "
-                 f"{fmt(r['tx_avg'])}/s | {fmt(r['tx_max'])}/s |")
+        L.append(
+            f"| `{r['name']}` | {fmt(r['d_rx'])} | {fmt(r['d_tx'])} | "
+            f"{fmt(r['rx_avg'])}/s | {fmt(r['rx_max'])}/s | "
+            f"{fmt(r['tx_avg'])}/s | {fmt(r['tx_max'])}/s |"
+        )
     L.append("")
     L.append("---")
     L.append("")
@@ -144,9 +158,11 @@ def main() -> None:
     L.append("| Klien | RX Total | TX Total | RX Avg | RX Max | TX Avg | TX Max |")
     L.append("|---|---|---|---|---|---|---|")
     for r in sorted(pppoe, key=lambda x: x["d_rx"] + x["d_tx"], reverse=True):
-        L.append(f"| `{r['name']}` | {fmt(r['d_rx'])} | {fmt(r['d_tx'])} | "
-                 f"{fmt(r['rx_avg'])}/s | {fmt(r['rx_max'])}/s | "
-                 f"{fmt(r['tx_avg'])}/s | {fmt(r['tx_max'])}/s |")
+        L.append(
+            f"| `{r['name']}` | {fmt(r['d_rx'])} | {fmt(r['d_tx'])} | "
+            f"{fmt(r['rx_avg'])}/s | {fmt(r['rx_max'])}/s | "
+            f"{fmt(r['tx_avg'])}/s | {fmt(r['tx_max'])}/s |"
+        )
     L.append("")
     L.append("---")
     L.append("")
@@ -157,14 +173,18 @@ def main() -> None:
     L.append("| # | Interface | RX Total | RX Avg | RX Packets |")
     L.append("|---|---|---|---|---|")
     for i, r in enumerate(top_rx, 1):
-        L.append(f"| {i} | `{r['name']}` | {fmt(r['d_rx'])} | {fmt(r['rx_avg'])}/s | {r['rx_pkts']:,} |")
+        L.append(
+            f"| {i} | `{r['name']}` | {fmt(r['d_rx'])} | {fmt(r['rx_avg'])}/s | {r['rx_pkts']:,} |"
+        )
     L.append("")
     L.append("### Upload (TX) terbanyak")
     L.append("")
     L.append("| # | Interface | TX Total | TX Avg | TX Packets |")
     L.append("|---|---|---|---|---|")
     for i, r in enumerate(top_tx, 1):
-        L.append(f"| {i} | `{r['name']}` | {fmt(r['d_tx'])} | {fmt(r['tx_avg'])}/s | {r['tx_pkts']:,} |")
+        L.append(
+            f"| {i} | `{r['name']}` | {fmt(r['d_tx'])} | {fmt(r['tx_avg'])}/s | {r['tx_pkts']:,} |"
+        )
     L.append("")
     L.append("---")
     L.append("")
@@ -173,23 +193,33 @@ def main() -> None:
     notes = []
     for r in rows:
         if r["d_rx"] < 0 or r["d_tx"] < 0:
-            notes.append(f"- ⚠️ `{r['name']}`: counter menurun (kemungkinan sesi PPPoE reconnect/reset selama monitoring).")
+            notes.append(
+                f"- ⚠️ `{r['name']}`: counter menurun (kemungkinan sesi PPPoE reconnect/reset selama monitoring)."
+            )
     for r in idle:
-        notes.append(f"- ℹ️ `{r['name']}`: tidak ada trafik sama sekali selama monitoring (link down / tidak dipakai).")
+        notes.append(
+            f"- ℹ️ `{r['name']}`: tidak ada trafik sama sekali selama monitoring (link down / tidak dipakai)."
+        )
     if pppoe:
         quiet = [r for r in pppoe if r["active"] and 0 < (r["d_rx"] + r["d_tx"]) < 1024 * 1024]
         if quiet:
-            notes.append(f"- ℹ️ {len(quiet)} klien PPPoE hampir idle (<1 MB total): online tapi tidak aktif.")
+            notes.append(
+                f"- ℹ️ {len(quiet)} klien PPPoE hampir idle (<1 MB total): online tapi tidak aktif."
+            )
     heavy = [r for r in active if r["rx_max"] > 50 * 1024**2 or r["tx_max"] > 50 * 1024**2]
     for r in heavy:
-        notes.append(f"- 🔥 `{r['name']}`: spike di atas 50 MB/s (puncak RX {fmt(r['rx_max'])}/s, TX {fmt(r['tx_max'])}/s).")
+        notes.append(
+            f"- 🔥 `{r['name']}`: spike di atas 50 MB/s (puncak RX {fmt(r['rx_max'])}/s, TX {fmt(r['tx_max'])}/s)."
+        )
     if not notes:
         notes.append("- ✅ Tidak ada anomali; seluruh interface berjalan normal.")
     L.extend(notes)
     L.append("")
     L.append("---")
     L.append("")
-    L.append(f"*Laporan dibuat otomatis dari `{LOG.name}` — {n_iter} sampel, interval {meta.group(2)}s.*")
+    L.append(
+        f"*Laporan dibuat otomatis dari `{LOG.name}` — {n_iter} sampel, interval {meta.group(2)}s.*"
+    )
 
     OUT.write_text("\n".join(L) + "\n")
     print(f"OK -> {OUT}")

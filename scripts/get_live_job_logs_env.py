@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-import httpx
 import os
+
+import httpx
 
 
 def main():
