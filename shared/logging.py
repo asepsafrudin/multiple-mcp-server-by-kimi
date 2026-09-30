@@ -28,7 +28,11 @@ def configure_logging(level: str | None = None) -> None:
     stderr_handler.setFormatter(fmt)
     root.addHandler(stderr_handler)
 
-    file_handler = logging.FileHandler(str(log_path))
+    from logging.handlers import RotatingFileHandler
+    # Rotasi log jika melewati 10 MB, simpan maksimal 5 file terakhir (mcp_unified.log, .log.1, ...log.5)
+    file_handler = RotatingFileHandler(
+        str(log_path), maxBytes=10 * 1024 * 1024, backupCount=5, encoding="utf-8"
+    )
     file_handler.setFormatter(fmt)
     root.addHandler(file_handler)
 

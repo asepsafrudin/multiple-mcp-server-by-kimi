@@ -52,7 +52,7 @@ Daftar tugas & status implementasi `MCP Aseps`. Perbarui checklist ini seiring p
 - [x] mikrotik — RouterOS management via REST API + SSH (`servers/bridge/mikrotik_server.py`)
 - [x] unit test gemini (`tests/servers/bridge/test_gemini.py`, httpx mock)
 - [x] unit test mikrotik (`tests/servers/bridge/test_mikrotik.py`, httpx + asyncssh mock)
-- [ ] unit test gmail / telegram / vision
+- [x] unit test gmail / telegram / vision
 - [ ] verifikasi end-to-end dengan credential asli
 
 ## Infra & Kualitas
@@ -64,7 +64,7 @@ Daftar tugas & status implementasi `MCP Aseps`. Perbarui checklist ini seiring p
 - [x] Test suite **59 passed**, tanpa layanan eksternal (mock)
 - [x] Lint & format bersih (`ruff check` / `ruff format`)
 - [ ] Typecheck `mypy --strict` bersih
-- [ ] CI (GitHub Actions) untuk lint + test
+- [x] CI (GitHub Actions) untuk lint + test
 
 ## Dokumentasi
 

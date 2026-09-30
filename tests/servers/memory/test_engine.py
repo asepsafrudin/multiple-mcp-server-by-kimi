@@ -6,7 +6,7 @@ from datetime import UTC
 
 import pytest
 
-from servers.memory import engine
+from servers.memory import pg_engine as engine
 from shared.models import MemoryEntry
 
 # Queries that used to crash the raw FTS5 MATCH leg (TASK-140).

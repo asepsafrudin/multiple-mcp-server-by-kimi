@@ -19,6 +19,20 @@ services:
       - redis:/data
     restart: unless-stopped
 
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: mcp-postgres
+    environment:
+      - POSTGRES_USER=mcp_user
+      - POSTGRES_PASSWORD=mcp_password
+      - POSTGRES_DB=mcp_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
 volumes:
   ollama:
   redis:
+  postgres_data:

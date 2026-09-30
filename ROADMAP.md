@@ -20,23 +20,24 @@ Rencana pengembangan modular multi-server ini, dipetakan dari `ARCHITECTURE.md` 
 - [x] Infra & config editor: `start-all.sh`, `stop-all.sh`, `backup.sh`, docker-compose, Makefile, config stdio/sse (`e0e8c0f`)
 - [x] Test suite server inti + memori + pengetahuan + skill (**59 passed**, lint bersih)
 - [ ] Test end-to-end untuk Gmail, Telegram, Vision (saat ini hanya Gemini yang ter-cover)
-- [ ] Pemantauan & metrik server (health check, log rotation)
+- [x] Pemantauan & metrik server (health check via bash & log rotation via Python)
 - [ ] Backup DB terjadwal penuh (saat ini `backup.sh` manual)
 
 ## Phase 4 — Skalabilitas & Production ⏳ Direncanakan
 
-- [ ] Migrasi storage ke PostgreSQL + pgvector untuk multi-node / jutaan entri
+- [x] Migrasi storage ke PostgreSQL + pgvector untuk multi-node / jutaan entri
 - [ ] Hardening transport `ws` (saat ini didukung, belum diuji produksi)
 - [ ] Rate limiting & auth untuk mode remote (SSE)
 - [ ] Multi-tenant / multi-workspace per-user
-- [ ] CI pipeline (lint, format, typecheck `mypy --strict`, test) di setiap push
+- [x] CI pipeline GitHub Actions otomatis (lint, ruff, test pytest) saat code *push*
 
-## Phase 5 — Cognitive Pipeline & Advanced Agentic Workflows 🔮 Visi Mendatang
-Berdasarkan eksperimen kasus bisnis nyata (seperti penerjemahan data regulasi/dokumen hukum tebal), arsitektur Orchestrator perlu berevolusi melampaui alur linier (*Architect->Backend->Frontend*):
+## Phase 5 — Cognitive Pipeline & Advanced Agentic Workflows 🟡 Sedang berjalan
+Berdasarkan eksperimen kasus bisnis nyata dan pengembangan iteratif, arsitektur Orchestrator telah berkembang pesat:
+- [x] **Full-Stack App Dev Workflow:** Menyusun Graph Workflow MAF State Machine (Architect -> Backend -> Frontend -> QA) dengan *sandboxing* eksekusi terminal (e2b/Docker).
 - [ ] **Data Synthesis / Regulatory Pipeline:** Membuat *graph workflow* khusus (misal: `regulatory_graph.py`) yang berfokus pada ektraksi PDF masif (OCR per *chunk*), Semantic Filtering, hingga ekstraksi Hierarki Logika Bisnis (BRD).
 - [ ] **Map-Reduce RAG Engine:** Menyiasati *Context Window Bloat* dengan mekanisme ringkasan iteratif (analisis 10 halaman dirangkum, direduksi silang antar bagian dokumen yang tebal).
-- [ ] **Ambiguity Resolution Triage (HITL-Enhanced):** Menjadikan *UI Dashboard* bukan hanya sebagai persetujuan kode, tapi intervensi manusia *(Interactive Steering)* saat ekstraktor menemui kebingungan/multitafsir dalam redaksi dokumen hukum/kebijakan.
-- [ ] **Seamless Knowledge Harvesting:** Mengotomatiskan injeksi `servers/document` di awal gerbang masuk *Orchestrator*, sehingga ekstraksi data tebal secara luring terjadi tanpa perlu *background cron* mandiri.
+- [x] **Ambiguity Resolution Triage (HITL-Enhanced):** Menjadikan *UI Dashboard* sebagai sarana persetujuan (Visual HITL Approval Gate) dan intervensi manusia *(Interactive Steering)* secara *real-time*.
+- [x] **Seamless Knowledge Harvesting:** Mengotomatiskan injeksi `servers/document` (pengganti OCR cloud) di awal gerbang masuk *Orchestrator* untuk merender dan mengekstrak dokumen PDF.
 
 ## Catatan
 
