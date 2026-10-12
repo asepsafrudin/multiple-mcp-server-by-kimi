@@ -1,5 +1,11 @@
 # MCP Aseps — Modular Multi-Server Suite
 
+> **STATUS: ⛔ DEPRECATED (2026-10-12)**
+> Suite legacy ini digantikan oleh **[`servers/`](../../servers/README.md)** (`:8002–:8010`) dan **tidak aktif** di Cline
+> (lihat [`../../.agents/AGENTS.md`](../../.agents/AGENTS.md) §6). **Jangan menambah fitur baru di sini** — pindahkan/tambahkan di `servers/`.
+> Stack MCP aktif: `core/mcp-unified` (monolith, kanonik IDE) + `servers/` (modular, target migrasi).
+> Rujukan status: root [`README.md`](../../README.md) → §Stack Kanonik. Pemetaan historis: [`docs/audit-cline-mcp-settings.md`](../../docs/audit-cline-mcp-settings.md).
+
 Agnostik, modular MCP (Model Context Protocol) server suite untuk agent yang berbasis memori, pengetahuan, skill, dan integrasi eksternal. Dirancang untuk efisiensi token, local-first storage, dan mudah di-deploy di berbagai editor (Claude Desktop, Cline, Cursor, dll).
 
 ## Fitur Utama
@@ -8,10 +14,12 @@ Agnostik, modular MCP (Model Context Protocol) server suite untuk agent yang ber
 - **servers/memory** — long-term memory (LTM) dengan SQLite + sqlite-vec + FTS5 + Ollama embeddings.
 - **servers/knowledge** — workspace RAG: indexing file teks, chunking, hybrid semantic + keyword search.
 - **servers/skills** — procedural memory / skill registry dengan semantic recall.
-- **servers/bridge** — integrasi Gmail, Telegram, Gemini, Vision OCR (credential dari `.env`).
+- **servers/bridge** — integrasi Gmail, Telegram, Gemini, Vision OCR, Mikrotik, OpenHands (credential dari `.env`).
+- **servers/bridge/github_server** — integrasi GitHub (baca+tulis: repo, issues, PR, search). Env: `GITHUB_PAT`.
+- **servers/bridge/supabase_server** — integrasi Supabase (CRUD via PostgREST + DDL via Management API). Env: `SUPABASE_URL`, `SUPABASE_KEY`, `SUPABASE_TOKEN`.
 - **shared/** — konfigurasi terpusat, embedding client, Redis cache, model, logging, security.
 - **config/** — konfigurasi editor universal (`mcp_universal.json`, `claude_desktop_config.json`, `cline_mcp_settings.json`).
-- **scripts/** — `start-all.sh`, `stop-all.sh`, `backup.sh`.
+- **scripts/** — `start-all.sh`, `stop-all.sh`, `backup.sh`, `run_github_bridge.sh`, `run_supabase_bridge.sh`.
 
 ## Prasyarat
 
