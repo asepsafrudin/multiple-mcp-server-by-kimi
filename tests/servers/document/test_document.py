@@ -1,4 +1,4 @@
-"""Tests for document server."""
+"""Tests for document server (TASK-139: path guard)."""
 
 from unittest.mock import MagicMock, patch
 
@@ -34,11 +34,15 @@ def mock_fitz():
         yield mock_fitz_module
 
 
+def _dummy_pdf(allowed_dir):
+    return str(allowed_dir / "dummy.pdf")
+
+
 @patch("servers.document.server.Path.exists")
-def test_document_extract_text(mock_exists, mock_fitz):
+def test_document_extract_text(mock_exists, mock_fitz, allowed_dir):
     mock_exists.return_value = True
 
-    result = document_extract_text("dummy.pdf")
+    result = document_extract_text(_dummy_pdf(allowed_dir))
 
     assert result["status"] == "ok"
     assert result["total_pages"] == 2
@@ -48,10 +52,10 @@ def test_document_extract_text(mock_exists, mock_fitz):
 
 
 @patch("servers.document.server.Path.exists")
-def test_document_view_page(mock_exists, mock_fitz):
+def test_document_view_page(mock_exists, mock_fitz, allowed_dir):
     mock_exists.return_value = True
 
-    result = document_view_page("dummy.pdf", 0)
+    result = document_view_page(_dummy_pdf(allowed_dir), 0)
 
     assert result["status"] == "ok"
     assert result["page_number"] == 0
@@ -61,10 +65,22 @@ def test_document_view_page(mock_exists, mock_fitz):
 
 
 @patch("servers.document.server.Path.exists")
-def test_document_view_page_out_of_bounds(mock_exists, mock_fitz):
+def test_document_view_page_out_of_bounds(mock_exists, mock_fitz, allowed_dir):
     mock_exists.return_value = True
 
-    result = document_view_page("dummy.pdf", 5)
+    result = document_view_page(_dummy_pdf(allowed_dir), 5)
 
     assert result["status"] == "error"
     assert "out of bounds" in result["error"]
+
+
+def test_document_extract_rejects_outside_allowed(allowed_dir):
+    res = document_extract_text("/etc/passwd")
+    assert res["status"] == "error"
+    assert "not allowed" in res["error"].lower()
+
+
+def test_document_view_rejects_outside_allowed(allowed_dir):
+    res = document_view_page("/etc/passwd", 0)
+    assert res["status"] == "error"
+    assert "not allowed" in res["error"].lower()

@@ -1,9 +1,6 @@
-"""Tests for the Vision OCR bridge server."""
+"""Tests for the Vision OCR bridge server (TASK-139: path guard)."""
 
 from __future__ import annotations
-
-import base64
-from pathlib import Path
 
 import pytest
 import httpx
@@ -56,81 +53,85 @@ def fake_vision_client(monkeypatch: pytest.MonkeyPatch):
                 return FakeResponse({
                     "responses": [{"textAnnotations": [{"description": "Hello World Vision"}]}]
                 })
-            elif "ollama" in url or "127.0.0.1" in url:
-                if "error" in json["images"][0]:
-                    if json["model"] == "llama3.2-vision":
-                        return FakeResponse({}, 404)
-                    else:
-                        raise ValueError("Simulated Ollama Fallback Error")
-                return FakeResponse({"response": "Fallback Text"})
+            # Ollama fallback: paksa ganti model (404) lalu sukses.
+            if json["model"] == "llama3.2-vision":
+                return FakeResponse({}, 404)
+            return FakeResponse({"response": "Fallback Text"})
 
     monkeypatch.setattr(httpx, "AsyncClient", FakeAsyncClient)
 
 
-async def test_vision_ocr_no_credentials(reset_settings, tmp_path: Path) -> None:
+async def test_vision_ocr_rejects_outside_allowed(allowed_dir) -> None:
+    res = await vision_server.vision_ocr("/etc/passwd")
+    assert res["status"] == "error"
+    assert "not allowed" in res["error"].lower()
+
+
+async def test_vision_ocr_no_credentials(allowed_dir) -> None:
     from shared import config as config_mod
     config_mod._settings = None
-    img_path = tmp_path / "test.png"
+    img_path = allowed_dir / "test.png"
     img_path.write_bytes(b"dummy")
     res = await vision_server.vision_ocr(str(img_path))
     assert res["status"] == "error"
     assert "GOOGLE_VISION_CREDENTIALS_PATH not configured" in res["error"]
 
 
-async def test_vision_ocr_not_found(reset_settings) -> None:
-    res = await vision_server.vision_ocr("/nonexistent/file.png")
+async def test_vision_ocr_not_found(allowed_dir) -> None:
+    res = await vision_server.vision_ocr(str(allowed_dir / "missing.png"))
     assert res["status"] == "error"
     assert "File not found" in res["error"]
 
 
-async def test_vision_ocr_success(fake_vision_client, monkeypatch: pytest.MonkeyPatch, reset_settings, tmp_path: Path) -> None:
+async def test_vision_ocr_success(fake_vision_client, monkeypatch: pytest.MonkeyPatch, allowed_dir) -> None:
     from shared import config as config_mod
     monkeypatch.setenv("GOOGLE_VISION_CREDENTIALS_PATH", "dummy.json")
     config_mod._settings = None
-    img_path = tmp_path / "test.png"
+    img_path = allowed_dir / "test.png"
     img_path.write_bytes(b"dummy image")
-    
+
     res = await vision_server.vision_ocr(str(img_path))
     assert res["status"] == "ok"
     assert res["text"] == "Hello World Vision"
     assert res["source"] == "google_cloud_vision"
 
 
-async def test_vision_ocr_fallback_success(fake_vision_client, monkeypatch: pytest.MonkeyPatch, reset_settings, tmp_path: Path) -> None:
+async def test_vision_ocr_fallback_success(fake_vision_client, monkeypatch: pytest.MonkeyPatch, allowed_dir) -> None:
     from shared import config as config_mod
     monkeypatch.setenv("GOOGLE_VISION_CREDENTIALS_PATH", "dummy.json")
     config_mod._settings = None
-    img_path = tmp_path / "test.png"
-    
-    # We trigger the fallback by having 'error' in base64 string
-    # b"zyxerror123" base64 encodes to b'enl4ZXJyb3IxMjM='
-    # b"error" base64 encodes to b'ZXJyb3I=' - wait, let's just make sure "error" is in the b64 string
-    target_b64 = "error_trigger"
-    import base64
-    img_bytes = base64.b64decode("zxerror123x==" + "a"*10) # dummy invalid
-    # It's easier: just put b"~error~" and if base64 contains "error", raise error.
-    # Actually, we can just monkeypatch the image string directly or adjust base64 output.
-    img_path.write_bytes(b"~error~") # => base64: fnJyb3J+
-    # Let me just manually patch base64 inside vision_server.
+    img_path = allowed_dir / "test.png"
+    img_path.write_bytes(b"~error~")
+    # "error" pada base64 -> memicu kegagalan Google Vision -> fallback Ollama.
     monkeypatch.setattr(vision_server.base64, "b64encode", lambda x: b"error_trigger")
-    
+
     res = await vision_server.vision_ocr(str(img_path))
     assert res["status"] == "ok"
     assert res["text"] == "Fallback Text"
     assert "ollama" in res["source"]
 
-async def test_vision_ocr_fallback_error(fake_vision_client, monkeypatch: pytest.MonkeyPatch, reset_settings, tmp_path: Path) -> None:
+
+async def test_vision_ocr_fallback_error(fake_vision_client, monkeypatch: pytest.MonkeyPatch, allowed_dir) -> None:
     from shared import config as config_mod
     monkeypatch.setenv("GOOGLE_VISION_CREDENTIALS_PATH", "dummy.json")
     config_mod._settings = None
-    img_path = tmp_path / "test.png"
+    img_path = allowed_dir / "test.png"
+    img_path.write_bytes(b"~error~")
     monkeypatch.setattr(vision_server.base64, "b64encode", lambda x: b"error_trigger_full")
-    
+
     class FakeThrowingClient:
-        async def __aenter__(self): return self
-        async def __aexit__(self, *exc): pass
+        def __init__(self, *args, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *exc):
+            pass
+
         async def post(self, url, json, headers=None):
             raise ValueError("All API Fail")
+
     monkeypatch.setattr(httpx, "AsyncClient", FakeThrowingClient)
 
     res = await vision_server.vision_ocr(str(img_path))

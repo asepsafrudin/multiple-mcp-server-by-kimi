@@ -15,6 +15,7 @@ from servers.skills import engine, loader
 from shared.config import get_settings
 from shared.logging import configure_logging
 from shared.models import Skill
+from shared.security import SafePath, UnsafePathError
 
 configure_logging()
 
@@ -132,6 +133,10 @@ async def skill_load_registry(registry_dir: str | None = None) -> dict:
     """Bulk-load skill definitions from a directory of YAML/JSON files."""
     settings = get_settings()
     path = Path(registry_dir) if registry_dir else settings.mcp_root / "skills" / "registry"
+    try:
+        path = SafePath(path).path
+    except UnsafePathError as exc:
+        return {"status": "error", "error": str(exc)}
     skills = loader.load_skills_from_disk(path)
     registered = 0
     for skill in skills:

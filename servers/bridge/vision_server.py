@@ -19,6 +19,7 @@ from fastmcp import FastMCP
 
 from shared.config import get_settings
 from shared.logging import configure_logging, get_logger
+from shared.security import SafePath, UnsafePathError
 
 configure_logging()
 logger = get_logger("mcp.bridge.vision")
@@ -77,7 +78,10 @@ async def _ollama_fallback_ocr(encoded_img: str) -> dict:
 @mcp.tool()
 async def vision_ocr(image_path: str) -> dict:
     """Run OCR on an image file using Google Cloud Vision."""
-    path = Path(image_path)
+    try:
+        path = SafePath(image_path).path
+    except UnsafePathError as exc:
+        return {"status": "error", "error": str(exc)}
     if not path.exists():
         return {"status": "error", "error": f"File not found: {image_path}"}
 

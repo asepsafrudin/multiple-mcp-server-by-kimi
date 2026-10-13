@@ -14,6 +14,7 @@ import fitz  # PyMuPDF
 from fastmcp import FastMCP
 
 from shared.logging import configure_logging, get_logger
+from shared.security import SafePath, UnsafePathError
 
 configure_logging()
 logger = get_logger("mcp.document")
@@ -30,7 +31,10 @@ def document_extract_text(file_path: str, start_page: int = 0, end_page: int = -
     Extract text from a PDF document sequentially.
     Can be used by Harvester (Baidu OCR logic placeholder) or agent to read text.
     """
-    path = Path(file_path)
+    try:
+        path = SafePath(file_path).path
+    except UnsafePathError as exc:
+        return {"status": "error", "error": str(exc)}
     if not path.exists():
         return {"status": "error", "error": f"File not found: {file_path}"}
 
@@ -68,7 +72,10 @@ def document_view_page(file_path: str, page_number: int, zoom: int = 2) -> dict:
     Render a specific page of a PDF document into a high-resolution base64 PNG image.
     Used for On-Demand Visual Rendering (bypassing OCR resolution degradation).
     """
-    path = Path(file_path)
+    try:
+        path = SafePath(file_path).path
+    except UnsafePathError as exc:
+        return {"status": "error", "error": str(exc)}
     if not path.exists():
         return {"status": "error", "error": f"File not found: {file_path}"}
 

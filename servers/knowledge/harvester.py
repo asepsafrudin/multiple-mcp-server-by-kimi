@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import mimetypes
+import re
 from pathlib import Path
 from typing import Any
 
@@ -113,10 +114,25 @@ def _is_text_file(path: Path) -> bool:
     return bool(mime and mime.startswith("text/"))
 
 
+# Berkas kredensial yang WAJIB di-skip (TASK-139): cegah rahasia masuk basis pengetahuan.
+CREDENTIAL_NAME_RE = re.compile(r"(credential|secret|token|service-account)", re.IGNORECASE)
+CREDENTIAL_SUFFIXES = {".pem", ".key"}
+
+
+def _is_credential_file(path: Path) -> bool:
+    if CREDENTIAL_NAME_RE.search(path.name):
+        return True
+    if path.suffix.lower() in CREDENTIAL_SUFFIXES:
+        return True
+    return any(part.lower() == "credentials" for part in path.parts)
+
+
 def _should_skip(path: Path) -> bool:
     if any(part in IGNORED_DIRS for part in path.parts):
         return True
     if path.name in IGNORED_FILES:
+        return True
+    if _is_credential_file(path):
         return True
     return path.name.startswith(".") and path.suffix in {".pyc", ".pyo", ".so", ".dylib", ".dll"}
 

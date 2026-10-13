@@ -13,6 +13,7 @@ from fastmcp import FastMCP
 
 from servers.knowledge import engine, harvester
 from shared.logging import configure_logging
+from shared.security import SafePath, UnsafePathError
 
 configure_logging()
 
@@ -35,7 +36,12 @@ async def knowledge_index(
     root: optional absolute path to the project root (default: <workspace_root>/<project>).
     max_files: optional cap on files scanned this run.
     """
-    root_path = Path(root) if root else None
+    root_path = None
+    if root:
+        try:
+            root_path = SafePath(root).path
+        except UnsafePathError as exc:
+            return {"status": "error", "error": str(exc)}
     return await harvester.harvest_project(
         project=project,
         root=root_path,
@@ -67,10 +73,16 @@ async def knowledge_reindex(
     project: str, root: str | None = None, max_files: int | None = None
 ) -> dict:
     """Clear a project's knowledge index and re-harvest it."""
+    root_path = None
+    if root:
+        try:
+            root_path = SafePath(root).path
+        except UnsafePathError as exc:
+            return {"status": "error", "error": str(exc)}
     await engine.delete_project(project)
     return await harvester.harvest_project(
         project=project,
-        root=Path(root) if root else None,
+        root=root_path,
         max_files=max_files,
     )
 
