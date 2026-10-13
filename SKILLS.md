@@ -70,3 +70,20 @@ skills = await skill_recall(query="refactor python", namespace="coding", limit=3
 ## Implementasi
 
 Lihat `servers/skills/engine.py`, `servers/skills/loader.py`, `servers/skills/server.py`.
+
+---
+
+## Protokol Agent Skill (Open Standard) — ringkasan §14
+
+> ⚠️ **Jangan tertukar.** *Skill* di dokumen ini = **procedural memory registry** (runtime, SQLite + sqlite-vec) milik suite ini. Berbeda dari **Agent Skill** standar terbuka (https://agentskills.io) — folder berisi `SKILL.md` yang dibaca agent untuk membakukan alur kerja.
+
+Saat membakukan alur kerja berulang agar dipakai ulang lintas agent, ikuti rulebook kanonik **[`.agents/AGENTS.md` §14](../../.agents/AGENTS.md)** dan prosedur lengkap di **[`docs/00-meta/08-agent-skill-authoring.md`](../../docs/00-meta/08-agent-skill-authoring.md)**.
+
+Ringkas:
+
+1. **Satu skill = satu pekerjaan.** `SKILL.md` berisi frontmatter (`name` = nama folder; `description` memuat *apa* + *kapan dipakai* dengan kata pemicu) + body imperatif. Materi panjang → `references/`; kode → `scripts/`.
+2. **Lokasi & prioritas:** `.commandcode/skills/<nama>/` (proyek, prioritas tertinggi) · `.agents/skills/<nama>/` (lintas tool) · `~/.commandcode/skills` | `~/.agents/skills` (user). Mirror ke `.agents/` agar terdeteksi Cline/Kimi/Cursor.
+3. **Nama wajib** lowercase-huruf-angka-tanda-hubung (≤64), tanpa `-` di ujung/ganda, **sama persis dengan nama folder**.
+4. **Verifikasi sebelum selesai:** skill termuat tanpa warning, dipanggil minimal sekali, dan bila membawa `scripts/` jalankan uji nyata.
+
+> Suite ini berstatus **DEPRECATED**; ringkasan di atas hanya rujukan dokumentasi — fitur/kode baru diletakkan di `servers/` atau `core/mcp-unified/`.
