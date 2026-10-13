@@ -43,6 +43,16 @@ def _isolate_environment() -> None:
 
     _config = importlib.import_module("shared.config")
     _config._settings = None
+
+    # PostgreSQL: pastikan extension pgvector ada (uji PG). Tanpa DB_URL -> dilewati.
+    if os.environ.get("DB_URL"):
+        try:
+            import psycopg
+
+            with psycopg.connect(os.environ["DB_URL"], autocommit=True) as pgconn:
+                pgconn.execute("CREATE EXTENSION IF NOT EXISTS vector")
+        except Exception:
+            pass
     yield
 
 
@@ -52,12 +62,20 @@ def _isolate_environment() -> None:
 
 
 def _get_engine_modules() -> list:
-    """Return the SQLite engine modules that hold a module-level ``_db``."""
-    from servers.knowledge import engine as knowledge_engine
-    from servers.memory import engine as memory_engine
-    from servers.skills import engine as skills_engine
+    """Return engine modules (SQLite + PostgreSQL) yang mungkin memiliki ``_db``."""
+    import importlib
 
-    return [memory_engine, knowledge_engine, skills_engine]
+    mods: list = []
+    for pkg, sub in (
+        ("memory", "engine"), ("memory", "pg_engine"),
+        ("knowledge", "engine"), ("knowledge", "pg_engine"),
+        ("skills", "engine"), ("skills", "pg_engine"),
+    ):
+        try:
+            mods.append(importlib.import_module(f"servers.{pkg}.{sub}"))
+        except Exception:
+            pass
+    return mods
 
 
 # ---------------------------------------------------------------------------
@@ -113,6 +131,21 @@ def _reset_engine_state() -> None:
     for mod in _get_engine_modules():
         if hasattr(mod, "_db"):
             mod._db = None  # type: ignore[attr-defined]
+
+    # PostgreSQL: bersihkan tabel agar tiap test terisolasi (bila DB_URL tersedia).
+    db_url = os.environ.get("DB_URL")
+    if db_url:
+        try:
+            import psycopg
+
+            with psycopg.connect(db_url, autocommit=True) as pgconn:
+                for tbl in ("memories", "knowledge_chunks", "skills"):
+                    try:
+                        pgconn.execute(f"TRUNCATE TABLE {tbl} RESTART IDENTITY CASCADE")
+                    except Exception:
+                        pass
+        except Exception:
+            pass
     yield
     for mod in _get_engine_modules():
         if hasattr(mod, "_db"):

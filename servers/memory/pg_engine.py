@@ -134,9 +134,9 @@ async def store(entry: MemoryEntry) -> str:
                 entry.source,
                 entry.project,
                 embedding,
-                entry.created_at or now,
+                entry.created_at.isoformat() if entry.created_at else now,
                 now,
-                entry.expires_at,
+                entry.expires_at.isoformat() if entry.expires_at else None,
             ),
         )
         await conn.commit()
@@ -192,7 +192,7 @@ async def recall(
             if query_embedding:
                 k_search = max(50, limit * 5)
                 sql = """
-                    SELECT *, embedding <-> %s AS vector_distance
+                    SELECT *, embedding <-> %s::vector AS vector_distance
                     FROM memories
                     WHERE namespace = %s
                 """
@@ -207,7 +207,7 @@ async def recall(
                     sql += " AND importance >= %s"
                     params.append(min_importance)
                 
-                sql += " ORDER BY embedding <-> %s LIMIT %s"
+                sql += " ORDER BY embedding <-> %s::vector LIMIT %s"
                 params.extend([query_embedding, limit])
 
                 await cur.execute(sql, params)
