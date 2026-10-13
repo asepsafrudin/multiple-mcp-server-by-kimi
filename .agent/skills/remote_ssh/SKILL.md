@@ -9,7 +9,7 @@ Gunakan instruksi ini ketika Anda diminta untuk menyiapkan koneksi jarak jauh ke
 
 ## Perintah Diagnostik yang Bermanfaat
 1. Mengecek Konfigurasi Jaringan:
-   - Terkait **Tailscale**: Cek ping ke node Tailscale `ping -c 2 100.78.237.113`. Jika gagal di WSL lokal, hubungi/periksa aplikasi *host* Windows `tailscale.exe status`
+   - Terkait **Tailscale**: Cek ping ke node Tailscale `ping -c 2 <TAILSCALE_IP>`. Jika gagal di WSL lokal, hubungi/periksa aplikasi *host* Windows `tailscale.exe status`
    - Terkait **Cloudflare**: Pastikan `cloudflared` terinstal. Perintah instal:
      ```bash
      mkdir -p ~/.local/bin && wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -O ~/.local/bin/cloudflared && chmod +x ~/.local/bin/cloudflared

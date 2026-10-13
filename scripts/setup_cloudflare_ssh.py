@@ -23,7 +23,7 @@ token = env["CF_API_TOKEN"]
 token_dns = env["CF_DNS_API_TOKEN"]
 zone_id = env["CF_ZONE_ID_SUPD2"]
 
-ssh_domain = dict(env).get("CF_TUNNEL_SSH_DOMAIN", "ssh.supd2.net")
+ssh_domain = dict(env).get("CF_TUNNEL_SSH_DOMAIN", "ssh.example.com")
 ssh_target = dict(env).get("CF_TUNNEL_SSH_TARGET", "ssh://localhost:8022")
 tunnel_name = "antigravity-wsl-ssh"
 

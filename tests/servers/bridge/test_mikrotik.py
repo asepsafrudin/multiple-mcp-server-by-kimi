@@ -192,7 +192,7 @@ async def test_mikrotik_router2_and_overrides(
     res = await mikrotik_server.mikrotik_get_identity(router="router2")
     assert res["status"] == "ok"
     assert (
-        fake_client.instances[0].calls[0]["url"] == "https://192.168.22.1:8443/rest/system/identity"
+        fake_client.instances[0].calls[0]["url"] == "https://192.0.2.1:8443/rest/system/identity"
     )
 
     # 2. Test REST with dynamic override
