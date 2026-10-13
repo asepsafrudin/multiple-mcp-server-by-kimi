@@ -58,7 +58,7 @@ def fake_client(monkeypatch: pytest.MonkeyPatch):
 
 
 def _set_creds(monkeypatch: pytest.MonkeyPatch, reset_settings) -> None:
-    monkeypatch.setenv("MIKROTIK_HOST", "192.168.88.1")
+    monkeypatch.setenv("MIKROTIK_HOST", "192.0.2.1")
     monkeypatch.setenv("MIKROTIK_USER", "admin")
     monkeypatch.setenv("MIKROTIK_PASSWORD", "secret")
     monkeypatch.setenv("MIKROTIK_PORT", "443")
@@ -80,7 +80,7 @@ async def test_mikrotik_get_identity(monkeypatch, reset_settings, fake_client) -
     assert res["data"]["version"] == "7.13"
     assert res["path"] == "system/identity"
     assert (
-        fake_client.instances[0].calls[0]["url"] == "https://192.168.88.1:443/rest/system/identity"
+        fake_client.instances[0].calls[0]["url"] == "https://192.0.2.1:443/rest/system/identity"
     )
 
 
@@ -90,7 +90,7 @@ async def test_mikrotik_get_system_resource(monkeypatch, reset_settings, fake_cl
     assert res["status"] == "ok"
     assert res["data"]["version"] == "7.13"
     assert (
-        fake_client.instances[0].calls[0]["url"] == "https://192.168.88.1:443/rest/system/resource"
+        fake_client.instances[0].calls[0]["url"] == "https://192.0.2.1:443/rest/system/resource"
     )
 
 
@@ -102,7 +102,7 @@ async def test_mikrotik_run_rest_put(monkeypatch, reset_settings, fake_client) -
     assert res["status"] == "ok"
     call = fake_client.instances[0].calls[0]
     assert call["method"] == "PUT"
-    assert call["url"] == "https://192.168.88.1:443/rest/ip/address"
+    assert call["url"] == "https://192.0.2.1:443/rest/ip/address"
 
 
 async def test_mikrotik_ping_payload(monkeypatch, reset_settings, fake_client) -> None:
@@ -173,7 +173,7 @@ async def test_mikrotik_export_config(monkeypatch, reset_settings, fake_ssh) -> 
     assert res["status"] == "ok"
     assert res["exit_status"] == 0
     assert "Router1" in res["stdout"]
-    assert fake_ssh["args"][0] == "192.168.88.1"  # host passed positionally
+    assert fake_ssh["args"][0] == "192.0.2.1"  # host passed positionally
 
 
 async def test_mikrotik_router2_and_overrides(
@@ -181,7 +181,7 @@ async def test_mikrotik_router2_and_overrides(
 ) -> None:
     # Set credentials for both router 1 and router 2
     _set_creds(monkeypatch, reset_settings)
-    monkeypatch.setenv("MIKROTIK2_HOST", "192.168.22.1")
+    monkeypatch.setenv("MIKROTIK2_HOST", "192.0.2.1")
     monkeypatch.setenv("MIKROTIK2_PORT", "8443")
     monkeypatch.setenv("MIKROTIK2_SCHEME", "https")
     monkeypatch.setenv("MIKROTIK2_USER", "admin2")
@@ -197,18 +197,18 @@ async def test_mikrotik_router2_and_overrides(
 
     # 2. Test REST with dynamic override
     res = await mikrotik_server.mikrotik_get_identity(
-        router="router2", router_host="192.168.100.1", router_port=443
+        router="router2", router_host="192.0.2.1", router_port=443
     )
     assert res["status"] == "ok"
     assert (
-        fake_client.instances[1].calls[0]["url"] == "https://192.168.100.1:443/rest/system/identity"
+        fake_client.instances[1].calls[0]["url"] == "https://192.0.2.1:443/rest/system/identity"
     )
 
     # 3. Test SSH on router 2
     res = await mikrotik_server.mikrotik_ssh_command("/system identity print", router="router2")
     assert res["status"] == "ok"
     assert "Router1" in res["stdout"]
-    assert fake_ssh["args"][0] == "192.168.22.1"
+    assert fake_ssh["args"][0] == "192.0.2.1"
     assert fake_ssh["kwargs"]["port"] == 2222
     assert fake_ssh["kwargs"]["username"] == "admin2"
     assert fake_ssh["kwargs"]["password"] == "secret2"
@@ -217,13 +217,13 @@ async def test_mikrotik_router2_and_overrides(
     res = await mikrotik_server.mikrotik_ssh_command(
         "/system identity print",
         router="router2",
-        router_host="192.168.99.1",
+        router_host="192.0.2.1",
         router_ssh_port=8022,
         router_user="override_user",
         router_password="override_password",
     )
     assert res["status"] == "ok"
-    assert fake_ssh["args"][0] == "192.168.99.1"
+    assert fake_ssh["args"][0] == "192.0.2.1"
     assert fake_ssh["kwargs"]["port"] == 8022
     assert fake_ssh["kwargs"]["username"] == "override_user"
     assert fake_ssh["kwargs"]["password"] == "override_password"

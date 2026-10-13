@@ -82,7 +82,7 @@ Tools SSH: `mikrotik_ssh_command`, `mikrotik_export_config`.
 **Konfigurasi `.env`:**
 
 ```dotenv
-MIKROTIK_HOST=192.168.1.2
+MIKROTIK_HOST=192.0.2.1
 MIKROTIK_PORT=80          # REST via www (HTTP); pakai 443 jika www-ssl diaktifkan
 MIKROTIK_SCHEME=http      # atau https
 MIKROTIK_TLS_VERIFY=false # abaikan cert self-signed (hanya untuk https)
@@ -106,7 +106,7 @@ MIKROTIK_SSH_PORT=22
   /certificate set ca-key trusted=yes
 
   # 2) Buat sertifikat server, dikeluarkan oleh CA
-  /certificate add name=server-key common-name=192.168.1.2 key-usage=digital-signature,key-encipherment,tls-server days-valid=3650
+  /certificate add name=server-key common-name=192.0.2.1 key-usage=digital-signature,key-encipherment,tls-server days-valid=3650
   /certificate sign server-key ca=ca-key
   /certificate set server-key trusted=yes
 

@@ -38,7 +38,7 @@ async def main():
         namespace="network",
         content=(
             "MikroTik Router 2 (Lokal / LAN):\n"
-            "- Host: 192.168.22.1\n"
+            "- Host: 192.0.2.1\n"
             "- REST SSL Port: 80 (HTTP)\n"
             "- SSH Port: 22\n"
             "- Scheme: http\n"
@@ -46,7 +46,7 @@ async def main():
             "- OS: RouterOS v6 (No REST API support, returns 404 on /rest; use SSH instead)\n"
             "- Connection Type: Local IP connection"
         ),
-        summary="MikroTik Router 2 Connection (192.168.22.1)",
+        summary="MikroTik Router 2 Connection (192.0.2.1)",
         category="context",
         tags=["mikrotik", "router2", "local", "lan"],
         importance=10,

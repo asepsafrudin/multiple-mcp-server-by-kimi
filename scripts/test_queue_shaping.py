@@ -95,9 +95,9 @@ async def monitor_queue(settings: dict, queue_name: str, duration: float):
 def main():
     settings = get_settings()
 
-    # We will target Yudi (192.168.99.100) which has a limit of 2M (2000k)
+    # We will target Yudi (192.0.2.1) which has a limit of 2M (2000k)
     # We will flood at 5000 Kbps (5 Mbps), which is way above Yudi's limit
-    target_ip = "192.168.99.100"
+    target_ip = "192.0.2.1"
     target_port = 9999
     flood_duration = 8.0  # 8 seconds
     rate_kbps = 5000  # 5 Mbps

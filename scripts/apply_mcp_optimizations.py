@@ -69,7 +69,7 @@ async def main():
         "/queue type { set [find name=default] kind=fq-codel fq-codel-limit=1000 fq-codel-target=5ms fq-codel-interval=100ms }",
         "/queue type { set [find name=default-small] kind=fq-codel fq-codel-limit=1000 fq-codel-target=5ms fq-codel-interval=100ms }",
         # --- Client DHCP Server: Update to local DNS Cache and enable IP Spoofing protection ---
-        '/ip dhcp-server network { set [find address="192.168.77.0/24"] dns-server=192.168.77.1 }',
+        '/ip dhcp-server network { set [find address="192.0.2.0/24"] dns-server=192.0.2.1 }',
         "/ip dhcp-server { set [find name=dhcp1] add-arp=yes }",
         "/interface { set [find name=ether9] arp=reply-only }",
         # --- PPP Profiles: Enforce TCP MSS alteration explicitly ---
