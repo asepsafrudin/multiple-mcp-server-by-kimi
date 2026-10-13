@@ -1,23 +1,19 @@
-"""Tests for the memory engine (SQLite + sqlite-vec + FTS5)."""
+"""Tests for the memory engine (PostgreSQL + pgvector + FTS)."""
 
 from __future__ import annotations
 
 import os
-
-import pytest as _pytest
-
-_DB_URL_SKIP = _pytest.mark.skipif(
-    not os.environ.get("DB_URL"),
-    reason="Butuh PostgreSQL: set DB_URL (jalankan scripts/test_with_postgres.sh)",
-)
-pytestmark = _DB_URL_SKIP
-
 from datetime import UTC
 
 import pytest
 
 from servers.memory import pg_engine as engine
 from shared.models import MemoryEntry
+
+pytestmark = pytest.mark.skipif(
+    not os.environ.get("DB_URL"),
+    reason="Butuh PostgreSQL: set DB_URL (jalankan scripts/test_with_postgres.sh)",
+)
 
 # Queries that used to crash the raw FTS5 MATCH leg (TASK-140).
 FTS_TRIGGER_QUERIES = ["C++", "(test", "search OR", 'unbalanced "quote']
